@@ -54,6 +54,7 @@ const Login = () => {
   return (
     <div className='flex justify-center items-center w-full h-screen'>
          <div className='border border-gray-300 bg-white p-8 rounded-xl shadow-2xl w-96'>
+            <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
       <form onSubmit={handlelogin} className='flex flex-col gap-3 w-full'>
         <input 
           type='text' 

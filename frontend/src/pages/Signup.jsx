@@ -103,18 +103,19 @@ const Signup = () => {
     
   return (
     <div className='flex justify-center items-center w-full h-screen '>
-        <div className='border border-gray-300 bg-white p-8 rounded-xl shadow-2xl w-96 cursor-pointer' >
+        <div className='border border-gray-200 bg-white p-8 rounded-2xl shadow-xl w-96 cursor-pointer' >
+            <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
             <p className='text-red-600 text-center'>{error.allfield}</p>
         <form className='flex flex-col gap-3 w-full' onSubmit={handle}>
-        <input type='text' placeholder='Enter your Name' onChange={namehandle} className='p-2 border border-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500'/>
-        <p className='text-red-600 '>{error.name}</p>
-        <input type='text' placeholder='Enter your Username' onChange={usernamehandle} className='p-2 border border-gray-400 rounded  focus:outline-none focus:ring-2 focus:ring-blue-500'/>
-        <p className='text-red-600 '>{error.username}</p>
-        <input type='text' placeholder='Enter your Email' onChange={emailhandle} className='p-2 border border-gray-400 rounded  focus:outline-none focus:ring-2 focus:ring-blue-500'/>
-        <p className='text-red-600 '>{error.email}</p>
-        <input type='password' placeholder='Enter your Password' onChange={passwordhandle} className='p-2 border border-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500'/>
-        <p className='text-red-600 '>{error.password}</p>
-      <button className='bg-blue-600 hover:bg-blue-500 text-white py-2 rounded w-full cursor-pointer' type='submit'>Submit</button>
+        <input type='text' placeholder='Enter your Name' onChange={namehandle} className='p-3 border border-gray-300 rounded  transition'/>
+        <p className='text-red-500 text-sm ml-1'>{error.name}</p>
+        <input type='text' placeholder='Enter your Username' onChange={usernamehandle} className='p-3 border border-gray-300 rounded  transition'/>
+        <p className='text-red-500 text-sm ml-1'>{error.username}</p>
+        <input type='text' placeholder='Enter your Email' onChange={emailhandle} className='p-3 border border-gray-300 rounded transition'/>
+        <p className='text-red-500 text-sm ml-1'>{error.email}</p>
+        <input type='password' placeholder='Enter your Password' onChange={passwordhandle} className='p-3 border border-gray-300 rounded transition'/>
+        <p className='text-red-500 text-sm ml-1'>{error.password}</p>
+      <button className='bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg w-full font-semibold transition' type='submit'>Signup</button>
         </form>
         <Switch type="signup"/>
         </div>

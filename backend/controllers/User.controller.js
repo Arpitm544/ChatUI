@@ -1,6 +1,6 @@
 const express=require('express')
 const bcrypt=require('bcryptjs')
-const User = require('../schema/User_schema')
+const User=require('../model/User_schema')
 const jwt=require("jsonwebtoken")
 const authmiddleware = require('../middleware/autMiddleware')
 const router=express.Router()
@@ -74,6 +74,19 @@ router.post('/login',async (req,res)=>{
     }
 })
 
+router.get('/:id',async(req,res)=>{
+    try {
+        const {id}=req.params
+        const user=await User.findById(id).select("-password")
+        if(!user){
+            return res.status(404).json({message:"User not found"})
+        }
+        res.status(200).json({message:"Get user by id",user})
+    } catch (error) {
+        console.log("Get User by ID Error:", error)
+        res.status(500).json({message:"Server error"})
+    }
+})
 router.get('/all',async(req,res)=>{
     const user=await User.find().select("-password")
     res.status(200).json({message:"Get all user",user})
