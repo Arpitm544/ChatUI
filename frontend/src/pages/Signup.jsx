@@ -46,7 +46,11 @@ const Signup = () => {
                 email,
                 password
             },{withCredentials:true})
-
+              
+             if (res.data.success) {
+    //   localStorage.setItem("userId", res.data.user._id);
+    //   localStorage.setItem("username", res.data.user.username);
+             }
             alert("Signup Successful")
 
             setTimeout(()=>{

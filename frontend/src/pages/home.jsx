@@ -1,6 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logout from './Logout'
+import ChatApp from '../components/ChatApp'
+import { Link } from 'react-router-dom'
 
 const home = () => {
   return (
@@ -14,4 +16,4 @@ const home = () => {
   )
 }
 
-export default home
+export default home 

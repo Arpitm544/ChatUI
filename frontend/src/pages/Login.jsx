@@ -23,7 +23,13 @@ const Login = () => {
         email,
         password,
        },{withCredentials:true})
-
+          
+        if (res.data.success) {
+      // 🔥 save real mongo id + username
+      localStorage.setItem("userId", res.data.user._id);
+      localStorage.setItem("username", res.data.user.username);
+        }
+        
        navigate('/home')
     }
     catch(error){

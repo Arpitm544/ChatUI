@@ -3,10 +3,14 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const mongoose = require("mongoose");
-const { Server } = require("socket.io");
+const connectDB = require("./db/mongoose");
+const userRoutes = require("./controllers/User.controller");
+const messageRoutes = require("./controllers/message_controllers");
+const authmiddleware = require("./middleware/autMiddleware");
+const { initializeSocket } = require("./lib/socket");
 
 const app = express();
+const server = http.createServer(app);
 
 // Middlewares
 app.use(express.json());
@@ -18,28 +22,15 @@ app.use(
   })
 );
 
-// Routes + DB
-const userRoutes = require("./controllers/User.controller");
-const connectDB = require("./db/mongoose");
-const initializeSocket = require("./socket/socket");
-
+// Connect DB
 connectDB();
 
-// Create server + socket.io correctly
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5173",
-    credentials: true,
-  },
-});
-
-// Initialize socket
-initializeSocket(io);
-
-// Api routes
+// API Routes
 app.use("/user", userRoutes);
+app.use("/messages", authmiddleware, messageRoutes);
+
+// Initialize Socket.io using SAME server
+initializeSocket(server);
 
 // Start server
 server.listen(4000, () => {

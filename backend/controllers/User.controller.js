@@ -1,8 +1,9 @@
 const express=require('express')
 const bcrypt=require('bcryptjs')
-const User=require('../model/User_schema')
+const User=require('../model/user_schema')
 const jwt=require("jsonwebtoken")
 const authmiddleware = require('../middleware/autMiddleware')
+const  cloudinary = require("../lib/cloudinary.js");
 const router=express.Router()
 
 
@@ -74,27 +75,41 @@ router.post('/login',async (req,res)=>{
     }
 })
 
-router.get('/:id',async(req,res)=>{
-    try {
-        const {id}=req.params
-        const user=await User.findById(id).select("-password")
-        if(!user){
-            return res.status(404).json({message:"User not found"})
-        }
-        res.status(200).json({message:"Get user by id",user})
-    } catch (error) {
-        console.log("Get User by ID Error:", error)
-        res.status(500).json({message:"Server error"})
-    }
+router.get('/check-auth',authmiddleware,async(req,res)=>{
+      return res.status(200).json({authenticated:true,user:req.user})
 })
+
 router.get('/all',async(req,res)=>{
     const user=await User.find().select("-password")
     res.status(200).json({message:"Get all user",user})
 })
 
-router.get('/check-auth',authmiddleware,async(req,res)=>{
-      return res.status(200).json({authenticated:true,user:req.user})
-})
+// router.put('/update-profile', authmiddleware, async (req, res) => {
+//   try {
+//     const { profilePic } = req.body;
+//     const userId = req.user._id;
+
+//     if (!profilePic) {
+//       return res.status(400).json({ message: "Profile pic is required" });
+//     }
+
+//     const uploadResponse = await cloudinary.uploader.upload(profilePic);
+//     console.log("Cloudinary Upload Response:", uploadResponse);
+//     const updatedUser = await User.findByIdAndUpdate(
+//       userId,
+//       { profilePic: uploadResponse.secure_url },
+//       { new: true }
+//     );
+
+//     console.log("body received:", req.body);
+//     console.log("profilePic received:", req.body.profilePic);
+
+//     res.status(200).json(updatedUser);
+//   } catch (error) {
+//     console.log("error in update profile:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
 
 router.delete('/logout',authmiddleware,async (req,res)=>{
     try {
