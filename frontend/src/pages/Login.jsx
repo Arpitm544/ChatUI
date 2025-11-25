@@ -25,8 +25,8 @@ const Login = () => {
        },{withCredentials:true})
           
         if (res.data.success) {
-      // 🔥 save real mongo id + username
-      localStorage.setItem("userId", res.data.user._id);
+
+      localStorage.setItem("userId", res.data.user.id);
       localStorage.setItem("username", res.data.user.username);
         }
         

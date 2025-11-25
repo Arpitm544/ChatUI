@@ -2,15 +2,12 @@ import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 import axios from "axios";
 
-// Backend URL
 const BACKEND = "http://localhost:4000";
 
-// Connect socket with auth userId
+// SOCKET CONNECTION
 const socket = io(BACKEND, {
   withCredentials: true,
-  query: {
-    userId: localStorage.getItem("userId"),
-  },
+  query: { userId: localStorage.getItem("userId") },
 });
 
 export default function ChatApp() {
@@ -22,42 +19,40 @@ export default function ChatApp() {
 
   const loggedInUserId = localStorage.getItem("userId");
 
-  // Fetch all users except logged-in user
+  // LOAD USERS
   useEffect(() => {
     axios
       .get(`${BACKEND}/messages`, { withCredentials: true })
       .then((res) => setUsers(res.data))
-      .catch((err) => console.log(err));
+      .catch(console.log);
   }, []);
 
-  // Listen for online users from socket.io
+  // ONLINE USERS SOCKET EVENT
   useEffect(() => {
-    socket.on("getOnlineUsers", (users) => {
-      setOnlineUsers(users);
-    });
+    socket.on("getOnlineUsers", setOnlineUsers);
   }, []);
 
-  // Load messages for selected user
-  const loadMessages = async (id) => {
-    setSelectedUser(id);
-
-    const res = await axios.get(`${BACKEND}/messages/${id}`, {
+  // LOAD MESSAGES OF SELECTED USER
+  const loadMessages = async (userId) => {
+    setSelectedUser(userId);
+    const res = await axios.get(`${BACKEND}/messages/${userId}`, {
       withCredentials: true,
     });
-
     setMessages(res.data);
   };
 
-  // Listen for new messages
+  // RECEIVE NEW MESSAGE IN REALTIME
   useEffect(() => {
     socket.on("newmessage", (msg) => {
-      if (msg.senderId === selectedUser || msg.receiverId === selectedUser) {
-        setMessages((prev) => [...prev, msg]);
-      }
+      const isMyChat =msg.senderId === selectedUser || msg.receiverId === selectedUser;
+
+      if (isMyChat) setMessages((prev) => [...prev, msg]);
     });
+
+    return () => socket.off("newmessage");
   }, [selectedUser]);
 
-  // Send message
+  // SEND MESSAGE
   const sendMessage = async () => {
     if (!text.trim()) return;
 
@@ -73,12 +68,13 @@ export default function ChatApp() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* USERS LIST */}
+
+      {/* LEFT SIDE - USER LIST */}
       <div className="w-1/4 bg-white shadow p-4 overflow-y-auto">
         <h2 className="text-xl font-bold mb-3">Users</h2>
 
         {users.map((u) => {
-          const isOnline = onlineUsers.includes(u._id);
+          const online = onlineUsers.includes(u._id);
 
           return (
             <div
@@ -88,10 +84,9 @@ export default function ChatApp() {
                 selectedUser === u._id ? "bg-blue-200" : "bg-gray-200"
               }`}
             >
-              {/* ONLINE DOT */}
               <span
                 className={`h-3 w-3 rounded-full mr-2 ${
-                  isOnline ? "bg-green-500" : "bg-gray-400"
+                  online ? "bg-green-500" : "bg-gray-400"
                 }`}
               ></span>
 
@@ -101,39 +96,40 @@ export default function ChatApp() {
         })}
       </div>
 
-      {/* CHAT WINDOW */}
+      {/* RIGHT SIDE - CHAT WINDOW */}
       <div className="flex flex-col w-3/4">
+
         {selectedUser ? (
           <>
+            {/* MESSAGES */}
             <div className="flex-1 p-4 overflow-y-auto">
-              {messages.map((m, index) => (
-                <div
-                  key={index}
-                  className={`mb-2 flex ${
-                    m.senderId === loggedInUserId
-                      ? "justify-end"
-                      : "justify-start"
-                  }`}
-                >
+              {messages.map((m, i) => {
+                const isMine = m.senderId === loggedInUserId;
+
+                return (
                   <div
-                    className={`p-2 rounded-lg max-w-xs ${
-                      m.senderId === loggedInUserId
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-300"
+                    key={i}
+                    className={`mb-2 flex ${
+                      isMine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {m.text}
+                    <div
+                      className={`p-2 rounded-lg max-w-xs ${
+                        isMine ? "bg-blue-500 text-white" : "bg-gray-300"
+                      }`}
+                    >
+                      {m.text}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {/* INPUT BOX */}
+            {/* INPUT AREA */}
             <div className="p-4 flex items-center bg-white shadow">
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                type="text"
                 placeholder="Type a message..."
                 className="flex-1 p-2 border rounded"
               />
