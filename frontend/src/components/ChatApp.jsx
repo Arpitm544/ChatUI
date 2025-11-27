@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState,useMemo} from "react"
 import io from "socket.io-client"
 import axios from "axios"
-import Search from "./Search"
 import imageCompression from 'browser-image-compression'
+import CreateGroupModal from "./CreateGroupModal"
+import ChatSidebar from "./ChatSidebar"
+import ChatWindow from "./ChatWindow"
+import Navbar from "./Navbar"
+import { useNavigate } from "react-router-dom"
 
 const BACKEND = "http://localhost:4000"
 
@@ -14,39 +18,70 @@ const socket = io(BACKEND, {
 
 export default function ChatApp() {
   const [users, setUsers] = useState([])
+  const [groups, setGroups] = useState([])
   const [me,setMe]=useState('')
   const [onlineUsers, setOnlineUsers] = useState([])
+  
+  // Chat selection state
   const [selectedUser, setSelectedUser] = useState(null)
+  const [selectedGroup, setSelectedGroup] = useState(null)
+  
   const [messages, setMessages] = useState([])
   const [text, setText] = useState("")
   const [imageFile, setImageFile] = useState(null)
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
 
   const loggedInUserId = localStorage.getItem("userId")
+  const navigate = useNavigate()
 
-  // LOAD USERS
-  useEffect(() => {
+  const fetchUsers = () => {
     axios
       .get(`${BACKEND}/messages`, { withCredentials: true })
       .then((res) => setUsers(res.data))
       .catch(console.log)
-  }, [])
+  }
 
-  // LOAD MY INFO
-  useEffect(()=>{
+  const fetchGroups = () => {
+    axios
+      .get(`${BACKEND}/groups/mygroups`, { withCredentials: true })
+      .then((res) => setGroups(res.data))
+      .catch(console.log)
+  }
+
+  const fetchMyInfo = () => {
     axios.get(`${BACKEND}/messages/me`,{withCredentials:true})
     .then((res)=>setMe(res.data.name))
     .catch(console.log)
+  }
+
+  // LOAD USERS AND GROUPS
+  useEffect(() => {
+    fetchUsers()
+    fetchGroups()
+    fetchMyInfo()
   }, [])
 
   // ONLINE USERS
   useEffect(() => {
     socket.on("getOnlineUsers", setOnlineUsers)
+    return () => socket.off("getOnlineUsers")
   }, [])
 
   // LOAD MESSAGES OF SELECTED USER
-  const loadMessages = async (userId) => {
+  const loadUserMessages = async (userId) => {
     setSelectedUser(userId)
+    setSelectedGroup(null) // Deselect group
     const res = await axios.get(`${BACKEND}/messages/${userId}`, {
+      withCredentials: true,
+    })
+    setMessages(res.data)
+  }
+
+  // LOAD MESSAGES OF SELECTED GROUP
+  const loadGroupMessages = async (group) => {
+    setSelectedGroup(group)
+    setSelectedUser(null) // Deselect user
+    const res = await axios.get(`${BACKEND}/groups/${group._id}`, {
       withCredentials: true,
     })
     setMessages(res.data)
@@ -54,7 +89,9 @@ export default function ChatApp() {
 
   // RECEIVE NEW MESSAGE IN REALTIME
   useEffect(() => {
-    socket.on("newmessage", (msg) => {
+    // Direct Messages
+    const handleNewMessage = (msg) => {
+      if (!selectedUser) return
       const isMyChat =
         (msg.senderId === loggedInUserId && msg.receiverId === selectedUser) ||
         (msg.senderId === selectedUser && msg.receiverId === loggedInUserId)
@@ -62,10 +99,24 @@ export default function ChatApp() {
       if (isMyChat) {
         setMessages((prev) => [...prev, msg])
       }
-    })
+    }
 
-    return () => socket.off("newmessage")
-  }, [loggedInUserId, selectedUser])
+    // Group Messages
+    const handleNewGroupMessage = (msg) => {
+      if (!selectedGroup) return
+      if (msg.groupId === selectedGroup._id) {
+        setMessages((prev) => [...prev, msg])
+      }
+    }
+
+    socket.on("newmessage", handleNewMessage)
+    socket.on("newGroupMessage", handleNewGroupMessage)
+
+    return () => {
+      socket.off("newmessage", handleNewMessage)
+      socket.off("newGroupMessage", handleNewGroupMessage)
+    }
+  }, [loggedInUserId, selectedUser, selectedGroup])
 
   // HANDLE IMAGE UPLOAD
   const handleImageUpload = async (e) => {
@@ -89,112 +140,126 @@ export default function ChatApp() {
   const sendMessage = async () => {
     if (!text.trim() && !imageFile) return
 
-    const res = await axios.post(
-      `${BACKEND}/messages/${selectedUser}`,
-      {text,image:imageFile,
-      },{ withCredentials: true }
-    )
-    setMessages((prev) => [...prev, res.data])
-    setText("")
-    setImageFile(null)
+    try {
+      let res
+      if (selectedUser) {
+        res = await axios.post(
+          `${BACKEND}/messages/${selectedUser}`,
+          { text, image: imageFile },
+          { withCredentials: true }
+        )
+      } else if (selectedGroup) {
+        res = await axios.post(
+          `${BACKEND}/groups/send`,
+          { 
+            groupId: selectedGroup._id,
+            senderId: loggedInUserId,
+            text, 
+            image: imageFile 
+          },
+          { withCredentials: true }
+        )
+      }
+
+      if (res && res.data) {
+        setMessages((prev) => [...prev, res.data])
+        setText("")
+        setImageFile(null)
+      }
+    } catch (error) {
+      console.log("Error sending message:", error)
+    }
+  }
+
+  const handleCreateGroup = async (name, members, image) => {
+    try {
+      const res = await axios.post(
+        `${BACKEND}/groups/create`,
+        { name, members, image },
+        { withCredentials: true }
+      )
+      setGroups([...groups, res.data.group])
+      setShowCreateGroupModal(false)
+    } catch (error) {
+      console.log("Error creating group:", error)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await axios.delete(`${BACKEND}/user/logout`, { withCredentials: true })
+      localStorage.removeItem("userId")
+      localStorage.removeItem("token")
+      navigate("/login")
+    } catch (error) {
+      console.log("Logout error:", error)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+      try {
+        await axios.delete(`${BACKEND}/user/delete`, { withCredentials: true })
+        localStorage.removeItem("userId")
+        localStorage.removeItem("token")
+        navigate("/signup")
+      } catch (error) {
+        console.log("Delete account error:", error)
+      }
+    }
+  }
+
+  const handleDeleteGroup = async (groupId) => {
+    if (window.confirm("Are you sure you want to delete this group?")) {
+      try {
+        await axios.delete(`${BACKEND}/groups/${groupId}`, { withCredentials: true })
+        setGroups(groups.filter((g) => g._id !== groupId))
+        setSelectedGroup(null)
+      } catch (error) {
+        console.log("Delete group error:", error)
+        alert(error.response?.data?.message || "Error deleting group")
+      }
+    }
   }
 
   return (
-  <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100">
+      <Navbar onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {showCreateGroupModal && (
+          <CreateGroupModal
+            users={users}
+            onClose={() => setShowCreateGroupModal(false)}
+            onCreate={handleCreateGroup}
+          />
+        )}
 
-    {/* LEFT PANEL - USERS */}
-    <div className="w-1/4 bg-white shadow p-4 overflow-y-auto">
-      <h2 className="text-xl font-bold mb-3">Users:{me}</h2>
+        <ChatSidebar
+          me={me}
+          users={users}
+          groups={groups}
+          onlineUsers={onlineUsers}
+          selectedUser={selectedUser}
+          selectedGroup={selectedGroup}
+          onSelectUser={loadUserMessages}
+          onSelectGroup={loadGroupMessages}
+          onCreateGroupClick={() => setShowCreateGroupModal(true)}
+        />
 
-      <Search onSelectUser={loadMessages} />
-
-      {users.map((u) => {
-        const online = onlineUsers.includes(u._id);
-        const active = selectedUser === u._id;
-
-        return (
-          <div
-            key={u._id}
-            onClick={() => loadMessages(u._id)}
-            className={`p-3 flex items-center gap-2 rounded cursor-pointer mb-2 
-              ${active ? "bg-blue-300" : "bg-gray-200"}`}
-          >
-            <span
-              className={`h-3 w-3 rounded-full 
-                ${online ? "bg-green-500" : "bg-gray-400"}`}
-            />
-            {u.name}
-          </div>
-        );
-      })}
+        <ChatWindow
+          selectedUser={selectedUser}
+          selectedGroup={selectedGroup}
+          messages={messages}
+          loggedInUserId={loggedInUserId}
+          users={users}
+          text={text}
+          setText={setText}
+          handleImageUpload={handleImageUpload}
+          sendMessage={sendMessage}
+          onDeleteGroup={handleDeleteGroup}
+        />
+      </div>
     </div>
-
-    {/* RIGHT PANEL - CHAT */}
-    <div className="flex flex-col w-3/4">
-
-      {!selectedUser && (
-        <div className="flex items-center justify-center h-full text-gray-500 text-lg">
-          Select a user to start chat
-        </div>
-      )}
-
-      {selectedUser && (
-        <>
-          {/* MESSAGES */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            {messages.map((m, i) => {
-              const mine = m.senderId === loggedInUserId;
-
-              return (
-                <div
-                  key={i}
-                  className={`flex mb-2 ${mine ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`p-2 rounded-lg max-w-xs 
-                      ${mine ? "bg-blue-500 text-white" : "bg-gray-300"}`}
-                  >
-                    {m.image && (
-                      <img
-                        src={m.image}
-                        alt="sent-img"
-                        className="max-w-[200px] rounded mb-2"
-                      />
-                    )}
-                    {m.text && <p>{m.text}</p>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* INPUT BAR */}
-          <div className="p-4 flex items-center gap-3 border-t">
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="cursor-pointer"
-            />
-
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 p-2 border rounded"
-            />
-
-            <button
-              onClick={sendMessage}
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Send
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-);
+  )
 }

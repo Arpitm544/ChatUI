@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser")
 const connectDB = require("./db/mongoose")
 const userRoutes = require("./controllers/User.controller")
 const messageRoutes = require("./controllers/message_controllers")
+const groupRoutes = require('./controllers/group.controller')
 const authmiddleware = require("./middleware/autMiddleware")
 const { initializeSocket } = require("./lib/socket")
 
@@ -29,6 +30,7 @@ connectDB()
 // API Routes
 app.use("/user", userRoutes)
 app.use("/messages", authmiddleware, messageRoutes)
+app.use('/groups', authmiddleware, groupRoutes)
 
 // Initialize Socket.io using SAME server
 initializeSocket(server)

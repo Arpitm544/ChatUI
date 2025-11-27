@@ -1,5 +1,5 @@
 import axios from 'axios'
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import Switch from '../components/Switch'
 import ChatApp from '../components/ChatApp'
@@ -18,6 +18,20 @@ const Signup = () => {
         })
 
         const navigate=useNavigate()
+    
+        useEffect(() => {
+            const checkAuth = async () => {
+                try {
+                    await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/check-auth`, {
+                        withCredentials: true
+                    })
+                    navigate("/chat", { replace: true });
+                } catch (error) {
+                    // Not authenticated, stay on signup page
+                }
+            }
+            checkAuth();
+        }, [navigate]);
 
     const handle= async(e)=>{
           e.preventDefault()
@@ -41,7 +55,7 @@ const Signup = () => {
           })) 
 
             try{
-            const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`,{
+            const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/signup`,{
                 name,
                 username,
                 email,
@@ -56,7 +70,7 @@ const Signup = () => {
             alert("Signup Successful")
 
             setTimeout(()=>{
-                navigate('/chat')
+                navigate('/chat', {replace:true })
             },1500)
 
             console.log(res.data)

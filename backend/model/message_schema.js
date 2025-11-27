@@ -8,7 +8,11 @@ const messageSchema=new mongoose.Schema({
     },      
     receiverId:{
         type:String,
-        required:true,
+        default:null,
+    },
+     groupId: {
+      type: String,   // for group chat
+      default: null,
     },
     text:{
         type:String,

@@ -69,7 +69,7 @@ router.post('/:id', authmiddleware, async (req, res) => {
         
       const receiverSocketId=getReceiverSocketId(receiverId)
       if(receiverSocketId){
-        io.to(receiverSocketId).emit('newmessage',newMessage)
+        io().to(receiverSocketId).emit('newmessage',newMessage)
       } 
         res.status(201).json(newMessage)
     }   catch (error) {                             

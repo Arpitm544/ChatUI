@@ -132,4 +132,15 @@ router.delete('/logout',authmiddleware,async (req,res)=>{
     }
 })
 
+router.delete('/delete', authmiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id
+        await User.findByIdAndDelete(userId)
+        res.clearCookie("token").status(200).json({ success: true, message: "Account deleted successfully" })
+    } catch (error) {
+        console.log("Delete Account Error:", error)
+        res.status(500).json({ message: "Server error" })
+    }
+})
+
 module.exports=router

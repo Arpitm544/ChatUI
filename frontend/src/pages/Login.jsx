@@ -1,10 +1,8 @@
 import axios from 'axios'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Switch from '../components/Switch'
-import ChatApp from '../components/ChatApp'
-
 
 const Login = () => {
     const [email,setEmail]=useState('')
@@ -15,12 +13,27 @@ const Login = () => {
     })
 
     const navigate=useNavigate()
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/check-auth`, {
+                    withCredentials: true
+                })
+                navigate("/chat", { replace: true });
+            } catch (error) {
+                console.log(error)
+            }
+        }
+        checkAuth();
+    }, [navigate]);
+
     
     const handlelogin=async(e)=>{
        e.preventDefault()
     
        try{
-       const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/login`,{
+       const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/login`,{
         email,
         password,
        },{withCredentials:true})
@@ -31,7 +44,7 @@ const Login = () => {
       localStorage.setItem("username", res.data.user.username)
         }
         
-       navigate('/chat')
+       navigate('/chat', {replace:true })
     }
     catch(error){
         console.log(error)

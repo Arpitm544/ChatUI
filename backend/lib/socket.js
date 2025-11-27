@@ -1,4 +1,5 @@
 const { Server } = require("socket.io")
+const Group = require('../model/Group_schema')
 
 let getaIO=()=> io
 
@@ -13,14 +14,27 @@ function initializeSocket(server) {
     },
   })
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     console.log("New client connected:", socket.id)
 
     const userId = socket.handshake.query.userId
-    if (userId) userSocketMap[userId] = socket.id
+    
+    if (userId && userId !== "undefined" && userId !== "null") {
+        userSocketMap[userId] = socket.id
 
-    // Send online users to all clients
-    io.emit("getOnlineUsers", Object.keys(userSocketMap))
+        // Send online users to all clients
+        io.emit("getOnlineUsers", Object.keys(userSocketMap))
+
+        try {
+            const groups=await Group.find({members:userId})
+            groups.forEach(group=>{
+                socket.join(group._id.toString())
+                console.log(`User ${userId} joined group ${group._id.toString()}`)
+            })
+        } catch (error) {
+            console.log("Error joining groups:", error)
+        }
+    }
 
     socket.on("sendMessage", (data) => {
         const {senderId, receiverId, text, image} = data
@@ -35,6 +49,19 @@ function initializeSocket(server) {
             })
         }
     })
+
+    socket.on("sendGroupMessage", (data) => {
+        const {groupId, senderId, text, image} = data
+        
+        // Broadcast to all members in the group except the sender
+        io.to(groupId).emit("newGroupMessage", {
+            groupId,
+            senderId,
+            text,
+            image
+        })
+        console.log(`Message sent to group ${groupId} by user ${senderId}`)
+    })  
 
     socket.on("disconnect", () => {
       delete userSocketMap[userId]

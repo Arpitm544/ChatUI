@@ -12,7 +12,7 @@ const Search = ({ onSelectUser }) => {
     if (!val.trim()) {
       setFilteredUsers([])
       return
-    }   
+    }
 
     try {
       const res = await axios.get(
@@ -33,21 +33,28 @@ const Search = ({ onSelectUser }) => {
   }
 
   return (
-    <div>
+    <div className="relative w-full max-w-sm">
       <input
         type="text"
         value={search}
         onChange={handleSearch}
         placeholder="Search users..."
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
       />
-        <ul>
+
+      {filteredUsers.length > 0 && (
+        <ul className="absolute w-full bg-white mt-1 border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-20">
           {filteredUsers.map((u) => (
-            <li key={u._id} onClick={() => handleSelect(u._id)}>
+            <li
+              key={u._id}
+              onClick={() => handleSelect(u._id)}
+              className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+            >
               {u.name}
             </li>
           ))}
         </ul>
-     
+      )}
     </div>
   )
 }

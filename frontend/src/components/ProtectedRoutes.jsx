@@ -8,15 +8,16 @@ const ProtectedRoutes = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                await axios.get(`${import.meta.env.VITE_BACKEND_URL}/check-auth`, {
+                await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/check-auth`, {
                     withCredentials: true
                 })
                 setAuth(true)
-            } catch (error) {
+            } catch {
+                localStorage.removeItem('token')
+                localStorage.removeItem('userId')
                 setAuth(false)
             }
         }
-
         checkAuth()
     }, [])
 

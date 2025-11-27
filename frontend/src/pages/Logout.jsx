@@ -8,11 +8,15 @@ const Logout = () => {
     {
         e.preventDefault()
         try{
-        const res=await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/logout`,{
+        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/logout`,{
             withCredentials:true
         })
-        navigate('/login')
-        console.log("Loout successful")
+        .then(() => {
+            localStorage.removeItem('token')
+            localStorage.removeItem('userId')
+            navigate('/login')
+            console.log("Loout successful")
+        })
     }
     catch(error){
         console.log(error)
