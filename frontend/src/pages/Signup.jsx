@@ -27,8 +27,8 @@ const Signup = () => {
             setError((prev) => ({
               ...prev,
               allfield: "Please enter all fields"
-            }));
-            return;
+            }))
+            return
           }
           else{
             setError((prev)=>({...prev,allfield:""}))
@@ -38,7 +38,7 @@ const Signup = () => {
           setError((prev) => ({
             ...prev,
             allfield: ""
-          })); 
+          })) 
 
             try{
             const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`,{
@@ -50,14 +50,14 @@ const Signup = () => {
               
              if (res.data.success) {
 
-      localStorage.setItem("userId", res.data.user.id);
-      localStorage.setItem("username", res.data.user.username);
+      localStorage.setItem("userId", res.data.user.id)
+      localStorage.setItem("username", res.data.user.username)
              }
             alert("Signup Successful")
 
             setTimeout(()=>{
                 navigate('/chat')
-            },1500);
+            },1500)
 
             console.log(res.data)
 
@@ -87,7 +87,7 @@ const Signup = () => {
     }
 
     const emailhandle=(e)=>{
-        const regex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const regex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
         const val=e.target.value
         setEmail(val.toLowerCase())
         

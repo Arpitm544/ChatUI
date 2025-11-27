@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
 const Switch = ({ type }) => {
   return (
@@ -13,7 +13,7 @@ const Switch = ({ type }) => {
         </Link>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Switch;
+export default Switch

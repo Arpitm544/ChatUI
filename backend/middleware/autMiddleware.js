@@ -3,7 +3,7 @@ const jwt=require('jsonwebtoken')
 const authmiddleware=(req,res,next)=>{
     // const authHeader=req.header("Authorization")
     
-    const token=req.cookies.token;
+    const token=req.cookies.token
 
      if(!token){
         return res.status(401).json({message:"Access denied. No token provided."})

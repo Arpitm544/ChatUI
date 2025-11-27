@@ -1,24 +1,26 @@
-const express = require('express');
-const router = express.Router();
-const Message = require('../model/message_schema');
-const User = require('../model/user_schema');
-const cloudinary = require('../lib/cloudinary.js');
-const {io, getReceiverSocketId } = require('../lib/socket');
+const express = require('express')
+const router = express.Router()
+const Message = require('../model/message_schema')
+const User = require('../model/user_schema')
+const cloudinary = require('../lib/cloudinary.js')
+const {io, getReceiverSocketId } = require('../lib/socket')
+const authmiddleware = require('../middleware/autMiddleware.js')
 
-router.get('/', async   (req, res) => {
+
+router.get('/',authmiddleware, async   (req, res) => {
     try {
-    const loggedInUserId = req.user.id;
-    const filteredUsers=await User.find({_id:{$ne:loggedInUserId}}).select('-password');
+    const loggedInUserId = req.user.id
+    const filteredUsers=await User.find({_id:{$ne:loggedInUserId}}).select('-password')
 
-    res.status(200).json(filteredUsers);
+    res.status(200).json(filteredUsers)
     } catch (error) {
-        res.status(500).json({message:"Internal server error"});
+        res.status(500).json({message:"Internal server error"})
     }
-});
+})
 
-router.get('/:id', async (req, res) => {
+router.get('/:id',authmiddleware, async (req, res) => {
     try {
-        const {id:userToChatId} = req.params;
+        const {id:userToChatId} = req.params
         const senderId = req.user.id
 
         const messages = await Message.find({
@@ -28,23 +30,23 @@ router.get('/:id', async (req, res) => {
             ]
         })
 
-        res.status(200).json(messages);
+        res.status(200).json(messages)
     } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "Internal server error" })
     }
-});
+})
 
-router.post('/:id', async (req, res) => {
+router.post('/:id', authmiddleware, async (req, res) => {
     try {
-        const {text, image } = req.body;
+        const {text, image } = req.body
         const {id:receiverId} = req.params
         const senderId = req.user.id
 
-        let imageUrl;
+        let imageUrl
 
         if (image) {
             const uploadResponse = await cloudinary.uploader.upload(image)
-            imageUrl = uploadResponse.secure_url;
+            imageUrl = uploadResponse.secure_url
         }
         
         const newMessage = new Message({
@@ -52,17 +54,17 @@ router.post('/:id', async (req, res) => {
             receiverId,
             text,
             image:imageUrl
-        });
-        await newMessage.save();
+        })
+        await newMessage.save()
         
       const receiverSocketId=getReceiverSocketId(receiverId)
       if(receiverSocketId){
-        io.to(receiverSocketId).emit('newmessage',newMessage);
+        io.to(receiverSocketId).emit('newmessage',newMessage)
       } 
-        res.status(201).json(newMessage);
+        res.status(201).json(newMessage)
     }   catch (error) {                             
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ message: "Internal server error" })
     }
-}); 
+}) 
 
-module.exports = router;
+module.exports = router

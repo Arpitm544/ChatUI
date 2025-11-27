@@ -1,77 +1,84 @@
-import React, { useEffect, useState } from "react";
-import io from "socket.io-client";
-import axios from "axios";
+import React, { useEffect, useState } from "react"
+import io from "socket.io-client"
+import axios from "axios"
+import Search from "./Search"
+import imageCompression from 'browser-image-compression'
 
-const BACKEND = "http://localhost:4000";
+const BACKEND = "http://localhost:4000"
 
 // SOCKET CONNECTION
 const socket = io(BACKEND, {
   withCredentials: true,
-  query: { userId: localStorage.getItem("userId") },
-});
+  query:{ userId: localStorage.getItem("userId") },
+})
 
 export default function ChatApp() {
-  const [users, setUsers] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [users, setUsers] = useState([])
+  const [onlineUsers, setOnlineUsers] = useState([])
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState("")
+  const [imageFile, setImageFile] = useState(null)
 
-  const loggedInUserId = localStorage.getItem("userId");
+  const loggedInUserId = localStorage.getItem("userId")
 
   // LOAD USERS
   useEffect(() => {
     axios
       .get(`${BACKEND}/messages`, { withCredentials: true })
       .then((res) => setUsers(res.data))
-      .catch(console.log);
-  }, []);
+      .catch(console.log)
+  }, [])
 
   // ONLINE USERS
   useEffect(() => {
-    socket.on("getOnlineUsers", setOnlineUsers);
-  }, []);
+    socket.on("getOnlineUsers", setOnlineUsers)
+  }, [])
 
   // LOAD MESSAGES OF SELECTED USER
   const loadMessages = async (userId) => {
-    setSelectedUser(userId);
+    setSelectedUser(userId)
     const res = await axios.get(`${BACKEND}/messages/${userId}`, {
       withCredentials: true,
-    });
-    setMessages(res.data);
-  };
+    })
+    setMessages(res.data)
+  }
 
   // RECEIVE NEW MESSAGE IN REALTIME
   useEffect(() => {
     socket.on("newmessage", (msg) => {
       const isMyChat =
         (msg.senderId === loggedInUserId && msg.receiverId === selectedUser) ||
-        (msg.senderId === selectedUser && msg.receiverId === loggedInUserId);
+        (msg.senderId === selectedUser && msg.receiverId === loggedInUserId)
 
       if (isMyChat) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => [...prev, msg])
       }
-    });
+    })
 
-    return () => socket.off("newmessage");
-  }, [loggedInUserId, selectedUser]);
+    return () => socket.off("newmessage")
+  }, [loggedInUserId, selectedUser])
 
   // HANDLE IMAGE UPLOAD
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
+    const compressed=await imageCompression(file,{
+      maxSizeMB:0.5, //compress to max 0.5 MB
+      maxWidthOrHeight:880,
+    })
+
+    const reader = new FileReader()
+    reader.readAsDataURL(compressed)
     reader.onloadend = () => {
-      setImageFile(reader.result); // base64
-    };
-  };
+      setImageFile(reader.result) 
+    }
+  }
 
   // SEND MESSAGE
   const sendMessage = async () => {
-    if (!text.trim() && !imageFile) return;
+    if (!text.trim() && !imageFile) return
 
     const res = await axios.post(
       `${BACKEND}/messages/${selectedUser}`,
@@ -80,12 +87,12 @@ export default function ChatApp() {
         image: imageFile,
       },
       { withCredentials: true }
-    );
+    )
 
-    setMessages((prev) => [...prev, res.data]);
-    setText("");
-    setImageFile(null);
-  };
+    setMessages((prev) => [...prev, res.data])
+    setText("")
+    setImageFile(null)
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -94,8 +101,10 @@ export default function ChatApp() {
       <div className="w-1/4 bg-white shadow p-4 overflow-y-auto">
         <h2 className="text-xl font-bold mb-3">Users</h2>
 
+        <Search onSelectUser={loadMessages} />
+
         {users.map((u) => {
-          const online = onlineUsers.includes(u._id);
+          const online = onlineUsers.includes(u._id)
 
           return (
             <div
@@ -113,7 +122,7 @@ export default function ChatApp() {
 
               {u.name}
             </div>
-          );
+          )
         })}
       </div>
 
@@ -125,7 +134,7 @@ export default function ChatApp() {
             {/* MESSAGES */}
             <div className="flex-1 p-4 overflow-y-auto">
               {messages.map((m, i) => {
-                const isMine = m.senderId === loggedInUserId;
+                const isMine = m.senderId === loggedInUserId
 
                 return (
                   <div
@@ -140,7 +149,7 @@ export default function ChatApp() {
                       }`}
                     >
                       {/* TEXT */}
-                      {m.text && <p>{m.text}</p>}
+                     
 
                       {/* IMAGE */}
                       {m.image && (
@@ -150,9 +159,10 @@ export default function ChatApp() {
                           className="mt-2 max-w-[200px] rounded-lg"
                         />
                       )}
+                       {m.text && <p>{m.text}</p>}
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
 
@@ -187,5 +197,5 @@ export default function ChatApp() {
         )}
       </div>
     </div>
-  );
+  )
 }
