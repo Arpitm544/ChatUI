@@ -18,6 +18,16 @@ router.get('/',authmiddleware, async   (req, res) => {
     }
 })
 
+router.get("/me", authmiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.status(200).json(user)
+  } catch (error) {
+    console.log("Me route error:", error);
+    res.status(500).json({ message: "Server error" })
+  }
+})
+
 router.get('/:id',authmiddleware, async (req, res) => {
     try {
         const {id:userToChatId} = req.params
