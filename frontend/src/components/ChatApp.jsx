@@ -16,6 +16,7 @@ export default function ChatApp() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [imageFile, setImageFile] = useState(null);
 
   const loggedInUserId = localStorage.getItem("userId");
 
@@ -27,7 +28,7 @@ export default function ChatApp() {
       .catch(console.log);
   }, []);
 
-  // ONLINE USERS SOCKET EVENT
+  // ONLINE USERS
   useEffect(() => {
     socket.on("getOnlineUsers", setOnlineUsers);
   }, []);
@@ -44,32 +45,52 @@ export default function ChatApp() {
   // RECEIVE NEW MESSAGE IN REALTIME
   useEffect(() => {
     socket.on("newmessage", (msg) => {
-      const isMyChat =msg.senderId === selectedUser || msg.receiverId === selectedUser;
+      const isMyChat =
+        (msg.senderId === loggedInUserId && msg.receiverId === selectedUser) ||
+        (msg.senderId === selectedUser && msg.receiverId === loggedInUserId);
 
-      if (isMyChat) setMessages((prev) => [...prev, msg]);
+      if (isMyChat) {
+        setMessages((prev) => [...prev, msg]);
+      }
     });
 
     return () => socket.off("newmessage");
-  }, [selectedUser]);
+  }, [loggedInUserId, selectedUser]);
+
+  // HANDLE IMAGE UPLOAD
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      setImageFile(reader.result); // base64
+    };
+  };
 
   // SEND MESSAGE
   const sendMessage = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && !imageFile) return;
 
     const res = await axios.post(
       `${BACKEND}/messages/${selectedUser}`,
-      { text },
+      {
+        text,
+        image: imageFile,
+      },
       { withCredentials: true }
     );
 
     setMessages((prev) => [...prev, res.data]);
     setText("");
+    setImageFile(null);
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
 
-      {/* LEFT SIDE - USER LIST */}
+      {/* LEFT PANEL - USER LIST */}
       <div className="w-1/4 bg-white shadow p-4 overflow-y-auto">
         <h2 className="text-xl font-bold mb-3">Users</h2>
 
@@ -96,10 +117,10 @@ export default function ChatApp() {
         })}
       </div>
 
-      {/* RIGHT SIDE - CHAT WINDOW */}
+      {/* RIGHT PANEL - CHAT */}
       <div className="flex flex-col w-3/4">
 
-        {selectedUser ? (
+        {selectedUser && (
           <>
             {/* MESSAGES */}
             <div className="flex-1 p-4 overflow-y-auto">
@@ -118,21 +139,43 @@ export default function ChatApp() {
                         isMine ? "bg-blue-500 text-white" : "bg-gray-300"
                       }`}
                     >
-                      {m.text}
+                      {/* TEXT */}
+                      {m.text && <p>{m.text}</p>}
+
+                      {/* IMAGE */}
+                      {m.image && (
+                        <img
+                          src={m.image}
+                          alt="sent-img"
+                          className="mt-2 max-w-[200px] rounded-lg"
+                        />
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* INPUT AREA */}
-            <div className="p-4 flex items-center bg-white shadow">
+            {/* INPUT BAR */}
+            <div className="p-4 flex items-center">
+
+              {/* IMAGE INPUT */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="mr-3"
+              />
+
+              {/* TEXT INPUT */}
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type a message..."
                 className="flex-1 p-2 border rounded"
               />
+
+              {/* SEND BUTTON */}
               <button
                 onClick={sendMessage}
                 className="ml-3 px-4 py-2 bg-blue-600 text-white rounded"
@@ -141,10 +184,6 @@ export default function ChatApp() {
               </button>
             </div>
           </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-xl text-gray-500">
-            Select a user to start chatting
-          </div>
         )}
       </div>
     </div>

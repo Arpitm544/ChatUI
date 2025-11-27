@@ -2,7 +2,6 @@ import React from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Signup from './pages/Signup'
 import Login from './pages/Login'
-import Home from './pages/home'
 import ProtectedRoutes from './components/ProtectedRoutes'
 import ChatApp from './components/ChatApp'
 
@@ -17,7 +16,6 @@ const App = () => {
         <Route path='/login' element={<Login />} />
 
         <Route element={<ProtectedRoutes />}>
-          <Route path='/home' element={<Home />} />
           <Route path='/chat' element={<ChatApp />} />   
         </Route>
 

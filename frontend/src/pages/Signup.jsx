@@ -2,6 +2,7 @@ import axios from 'axios'
 import React, {useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import Switch from '../components/Switch'
+import ChatApp from '../components/ChatApp'
 
 const Signup = () => {
         const [name,setName]=useState("")
@@ -37,7 +38,7 @@ const Signup = () => {
           setError((prev) => ({
             ...prev,
             allfield: ""
-          }));
+          })); 
 
             try{
             const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/signup`,{
@@ -55,7 +56,7 @@ const Signup = () => {
             alert("Signup Successful")
 
             setTimeout(()=>{
-                navigate('/home')
+                navigate('/chat')
             },1500);
 
             console.log(res.data)

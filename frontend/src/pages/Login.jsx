@@ -3,6 +3,7 @@ import React from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Switch from '../components/Switch'
+import ChatApp from '../components/ChatApp'
 
 
 const Login = () => {
@@ -30,7 +31,7 @@ const Login = () => {
       localStorage.setItem("username", res.data.user.username);
         }
         
-       navigate('/home')
+       navigate('/chat')
     }
     catch(error){
         console.log(error)
