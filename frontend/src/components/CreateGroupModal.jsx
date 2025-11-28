@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import imageCompression from 'browser-image-compression'
 
-const CreateGroupModal = ({ users, onClose, onCreate }) => {
+const CreateGroupModal=({ users, onClose, onCreate }) => {
   const [groupName, setGroupName] = useState('')
   const [selectedMembers, setSelectedMembers] = useState([])
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
 
-  const handleToggleMember = (userId) => {
+  const handleToggleMember=(userId) => {
     if (selectedMembers.includes(userId)) {
       setSelectedMembers(selectedMembers.filter((id) => id !== userId))
     } else {

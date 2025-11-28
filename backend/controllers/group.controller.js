@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 const Message = require('../model/message_schema')
 const Group = require('../model/Group_schema')  
-const { io } = require('../lib/socket')
+const { io, getReceiverSocketId } = require('../lib/socket')
 const cloudinary = require('../lib/cloudinary')
 
 router.post('/create', async (req, res) => {
@@ -34,6 +34,14 @@ router.post('/create', async (req, res) => {
 
         // Populate members before sending response
         const populatedGroup = await Group.findById(group._id).populate('members', 'name profilePic')
+
+        // Emit new group event to all members
+        populatedGroup.members.forEach(member => {
+            const memberSocketId = getReceiverSocketId(member._id.toString())
+            if (memberSocketId) {
+                io().to(memberSocketId).emit("newGroup", populatedGroup)
+            }
+        })
 
         res.status(201).json({ message: "Group created successfully", group: populatedGroup })
     } catch (error) {
@@ -125,6 +133,15 @@ router.delete('/:id', async (req, res) => {
         if (group.admin.toString() !== userId) {
             return res.status(403).json({ message: "Only admin can delete the group" })
         }
+
+        // Emit group deleted event to all members
+        group.members.forEach(memberId => {
+            const memberSocketId = getReceiverSocketId(memberId.toString())
+            if (memberSocketId) {
+                io().to(memberSocketId).emit("groupDeleted", groupId)
+            }
+        })
+
         await Group.findByIdAndDelete(groupId)
         res.status(200).json({ success: true, message: "Group deleted successfully" })
     } catch (error) {

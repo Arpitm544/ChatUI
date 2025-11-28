@@ -42,10 +42,8 @@ const ChatSidebar = ({
                 }`}
               >
                 <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold overflow-hidden">
-                  {g.profilePic ? (
+                  {g.profilePic && (
                     <img src={g.profilePic} alt={g.name} className="h-full w-full object-cover" />
-                  ) : (
-                    g.name[0].toUpperCase()
                   )}
                 </div>
                 {g.name}

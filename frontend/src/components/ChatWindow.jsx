@@ -15,16 +15,6 @@ const ChatWindow = ({
 }) => {
   const [showGroupInfo, setShowGroupInfo] = useState(false)
 
-  if (!selectedUser && !selectedGroup) {
-    return (
-      <div className="flex flex-col w-3/4">
-        <div className="flex items-center justify-center h-full text-gray-500 text-lg">
-          Select a user or group to start chat
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col w-3/4">
       {showGroupInfo && selectedGroup && (
@@ -43,11 +33,9 @@ const ChatWindow = ({
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => setShowGroupInfo(true)}
           >
-            <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-              {selectedGroup.profilePic ? (
+            <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+              {selectedGroup.profilePic && (
                 <img src={selectedGroup.profilePic} alt={selectedGroup.name} className="h-full w-full object-cover" />
-              ) : (
-                selectedGroup.name[0].toUpperCase()
               )}
             </div>
             <span className="font-bold text-lg">{selectedGroup.name}</span>
@@ -58,17 +46,7 @@ const ChatWindow = ({
           </span>
         )}
 
-        {selectedGroup && (
-          <button
-            onClick={() => setShowGroupInfo(true)}
-            className="text-gray-500 hover:text-blue-600"
-            title="Group Info"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        )}
+
       </div>
 
       {/* MESSAGES */}

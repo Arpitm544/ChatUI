@@ -112,9 +112,23 @@ export default function ChatApp() {
     socket.on("newmessage", handleNewMessage)
     socket.on("newGroupMessage", handleNewGroupMessage)
 
+    socket.on("newGroup", (newGroup) => {
+      setGroups((prev) => [...prev, newGroup])
+      socket.emit("joinGroup", newGroup._id)
+    })
+
+    socket.on("groupDeleted", (groupId) => {
+      setGroups((prev) => prev.filter((g) => g._id !== groupId))
+      if (selectedGroup && selectedGroup._id === groupId) {
+        setSelectedGroup(null)
+      }
+    })
+
     return () => {
       socket.off("newmessage", handleNewMessage)
       socket.off("newGroupMessage", handleNewGroupMessage)
+      socket.off("newGroup")
+      socket.off("groupDeleted")
     }
   }, [loggedInUserId, selectedUser, selectedGroup])
 

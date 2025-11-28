@@ -61,6 +61,11 @@ function initializeSocket(server) {
             image
         })
         console.log(`Message sent to group ${groupId} by user ${senderId}`)
+    })
+
+    socket.on("joinGroup", (groupId) => {
+        socket.join(groupId)
+        console.log(`User ${userId} joined group ${groupId}`)
     })  
 
     socket.on("disconnect", () => {
