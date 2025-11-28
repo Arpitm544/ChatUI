@@ -70,7 +70,7 @@ export default function ChatApp() {
   // LOAD MESSAGES OF SELECTED USER
   const loadUserMessages = async (userId) => {
     setSelectedUser(userId)
-    setSelectedGroup(null) // Deselect group
+    setSelectedGroup(null)
     const res = await axios.get(`${BACKEND}/messages/${userId}`, {
       withCredentials: true,
     })
@@ -138,7 +138,7 @@ export default function ChatApp() {
     if (!file) return
 
     const compressed=await imageCompression(file,{
-      maxSizeMB:0.5, //compress to max 0.5 MB
+      maxSizeMB:0.5,
       maxWidthOrHeight:880,
     })
 
@@ -211,8 +211,8 @@ export default function ChatApp() {
   }
 
   const handleDeleteAccount = async () => {
-    if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
       try {
+        alert("Are you sure you want to delete your account?")
         await axios.delete(`${BACKEND}/user/delete`, { withCredentials: true })
         localStorage.removeItem("userId")
         localStorage.removeItem("token")
@@ -220,12 +220,11 @@ export default function ChatApp() {
       } catch (error) {
         console.log("Delete account error:", error)
       }
-    }
   }
 
   const handleDeleteGroup = async (groupId) => {
-    if (window.confirm("Are you sure you want to delete this group?")) {
       try {
+        alert("Are you sure you want to delete this group?")
         await axios.delete(`${BACKEND}/groups/${groupId}`, { withCredentials: true })
         setGroups(groups.filter((g) => g._id !== groupId))
         setSelectedGroup(null)
@@ -233,7 +232,6 @@ export default function ChatApp() {
         console.log("Delete group error:", error)
         alert(error.response?.data?.message || "Error deleting group")
       }
-    }
   }
 
   return (

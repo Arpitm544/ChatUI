@@ -33,11 +33,11 @@ const ChatWindow = ({
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => setShowGroupInfo(true)}
           >
-            <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-              {selectedGroup.profilePic && (
+            {selectedGroup.profilePic && (
+              <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-lg overflow-hidden">
                 <img src={selectedGroup.profilePic} alt={selectedGroup.name} className="h-full w-full object-cover" />
-              )}
-            </div>
+              </div>
+            )}
             <span className="font-bold text-lg">{selectedGroup.name}</span>
           </div>
         ) : (
