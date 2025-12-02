@@ -18,14 +18,15 @@ const server = http.createServer(app)
  async function startServer(){
 await connectDB()
 
-app.use(express.json({limit:'10mb'}))
-app.use(express.urlencoded({ extended: true , limit:'10mb'}))
-app.use(cookieParser())
 app.use(cors({
   origin: "http://localhost:5173",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
+
+app.use(express.json({limit:'10mb'}))
+app.use(express.urlencoded({ extended: true , limit:'10mb'}))
+app.use(cookieParser())
 
 app.get("/", (req, res) => {
   res.send("Backend is running")
