@@ -39,11 +39,11 @@ const Search = ({ onSelectUser }) => {
         value={search}
         onChange={handleSearch}
         placeholder="Search users..."
-        className="pl-2 w-85 h-10 border border-gray-300 rounded-md text-sm"
+        className="pl-2 w-70 h-10 border border-gray-300 rounded-md text-sm text-white"
       />
 
       {filteredUsers.length > 0 && (
-        <ul className="bg-white border border-gray-400">
+        <ul className="bg-white border border-gray-400 text-black">
           {filteredUsers.map((u) => (
             <li
               key={u._id}

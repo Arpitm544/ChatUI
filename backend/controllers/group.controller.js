@@ -150,4 +150,68 @@ router.delete('/:id', async (req, res) => {
     }
 })
 
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, image, members } = req.body;
+        const userId = req.user.id;
+
+        const group = await Group.findById(id);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        if (group.admin.toString() !== userId) {
+            return res.status(403).json({ message: "Only admin can update the group" });
+        }
+
+        let imageUrl = group.profilePic;
+        if (image) {
+            const uploadResponse = await cloudinary.uploader.upload(image);
+            imageUrl = uploadResponse.secure_url;
+        }
+
+        // Handle members update
+        let updatedMembers = group.members.map(m => m.toString());
+        if (members && Array.isArray(members)) {
+            updatedMembers = members;
+            // Ensure admin is always in the group
+            if (!updatedMembers.includes(userId)) {
+                updatedMembers.push(userId);
+            }
+        }
+
+        // Identify removed members to notify them
+        const oldMembers = group.members.map(m => m.toString());
+        const removedMembers = oldMembers.filter(m => !updatedMembers.includes(m));
+
+        const updatedGroup = await Group.findByIdAndUpdate(
+            id,
+            { name, profilePic: imageUrl, members: updatedMembers },
+            { new: true }
+        ).populate('members', 'name profilePic');
+
+        // Emit group updated event to all CURRENT members
+        updatedGroup.members.forEach(member => {
+            const memberSocketId = getReceiverSocketId(member._id.toString());
+            if (memberSocketId) {
+                io().to(memberSocketId).emit("groupUpdated", updatedGroup);
+            }
+        });
+
+        // Emit group deleted event to REMOVED members
+        removedMembers.forEach(memberId => {
+            const memberSocketId = getReceiverSocketId(memberId);
+            if (memberSocketId) {
+                io().to(memberSocketId).emit("groupDeleted", id);
+            }
+        });
+
+        res.status(200).json(updatedGroup);
+    } catch (error) {
+        console.log("Error in update group:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 module.exports = router

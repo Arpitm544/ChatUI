@@ -122,7 +122,7 @@ const Signup = () => {
     }
     
   return (
-    <div className='flex justify-center items-center w-full h-screen '>
+    <div className='flex justify-center items-center w-full h-screen bg-amber-300 '>
         <div className='border border-gray-200 bg-white p-8 rounded-2xl shadow-xl w-96 cursor-pointer' >
             <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
             <p className='text-red-600 text-center'>{error.allfield}</p>
