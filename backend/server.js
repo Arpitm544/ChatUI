@@ -14,17 +14,18 @@ const app = express()
 const server = http.createServer(app)
 
 // Middlewares
-
- async function startServer(){
-await connectDB()
+connectDB()
+ 
 app.set("trust proxy", 1);
 app.use(cors({
   origin:[
     "https://chat-ui-hm84.vercel.app",
+    "https://chat-ui-hm84-lmbz847l2-arpitm544s-projects.vercel.app",
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
+app.options("*", cors());
 
 app.use(express.json({limit:'10mb'}))
 app.use(express.urlencoded({ extended: true , limit:'10mb'}))
@@ -44,6 +45,3 @@ const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
-}
-
-startServer()
