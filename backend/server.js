@@ -28,7 +28,7 @@ app.use(
 connectDB()
 
 app.get("/", (req, res) => {
-  res.send("Hello World!")
+  res.send("Backend is running")
 })
 app.use("/user", userRoutes)
 app.use("/messages", authmiddleware, messageRoutes)
