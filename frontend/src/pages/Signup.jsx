@@ -63,7 +63,6 @@ const Signup = () => {
             },{withCredentials:true})
               
              if (res.data.success) {
-
       localStorage.setItem("userId", res.data.user.id)
       localStorage.setItem("username", res.data.user.username)
              }

@@ -23,7 +23,7 @@ This is the code that powers your current chat application.
 16:   query:{ userId: localStorage.getItem("userId") },
 17: })
 ```
-*   **Line 14**: Initializes the socket connection to your backend (`http://localhost:4000`).
+*   **Line 14**: Initializes the socket connection to your backend (`https://chatui-m4hf.onrender.com`).
 *   **Line 15**: `withCredentials: true` ensures cookies (like your JWT token) are sent with the socket handshake.
 *   **Line 16**: `query: { userId: ... }` sends the logged-in user's ID as a query parameter.
     *   **Why?**: The backend likely uses this `userId` to map the socket ID to a specific user (e.g., in a `userSocketMap`) so it knows who is online.
@@ -103,7 +103,7 @@ This component contains logic for a specific group chat view, including its own 
 ### 2. `socket.js` (Unused)
 This file exports a socket instance:
 ```javascript
-const socket = io("http://localhost:4000")
+const socket = io("https://chatui-m4hf.onrender.com")
 export default socket
 ```
 *   This file is **not imported** anywhere.

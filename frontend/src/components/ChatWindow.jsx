@@ -7,7 +7,7 @@ import MessageItem from './MessageItem'
 import { Send, Image as ImageIcon, MoreVertical, ArrowLeft } from 'lucide-react'
 import { useChat } from '../context/ChatContext'
 
-const BACKEND = "http://localhost:4000"
+const BACKEND = "https://chatui-m4hf.onrender.com"
 
 const ChatWindow = () => {
   const { type, id } = useParams()

@@ -14,6 +14,10 @@ const app = express()
 const server = http.createServer(app)
 
 // Middlewares
+
+ async function startServer(){
+await connectDB()
+
 app.use(express.json({limit:'10mb'}))
 app.use(express.urlencoded({ extended: true , limit:'10mb'}))
 app.use(cookieParser())
@@ -22,9 +26,6 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
 }));
-
-// Connect DB
-connectDB()
 
 app.get("/", (req, res) => {
   res.send("Backend is running")
@@ -39,3 +40,6 @@ initializeSocket(server)
 server.listen(4000, () => {
   console.log("server is running on port 4000")
 })
+}
+
+startServer()
