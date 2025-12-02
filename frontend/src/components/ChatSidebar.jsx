@@ -1,7 +1,9 @@
 import React from 'react'
 import Search from './Search'
-import { Users, MessageSquare, Plus, User } from 'lucide-react'
+import { Users, Plus, User } from 'lucide-react'
+import { GroupItem, UserItem } from './SidebarItems'
 import { useChat } from '../context/ChatContext'
+import { useNavigate, useParams } from 'react-router-dom'
 
 const ChatSidebar = () => {
   const { 
@@ -9,29 +11,14 @@ const ChatSidebar = () => {
     users, 
     groups, 
     onlineUsers, 
-    selectedUser, 
-    selectedGroup, 
-    loadUserMessages, 
-    loadGroupMessages, 
     setShowCreateGroupModal 
   } = useChat()
-  
-  const getGroupClass = (g) => {
-    return selectedGroup?._id === g._id 
-      ? 'p-3 flex items-center gap-3 rounded-xl cursor-pointer mb-2 bg-blue-600/20 border-l-4 border-blue-500 transition-all' 
-      : 'p-3 flex items-center gap-3 rounded-xl cursor-pointer mb-2 hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-200'
-  }
 
-  const getUserClass = (u) => {
-    return selectedUser === u._id 
-      ? 'p-3 flex items-center gap-3 rounded-xl cursor-pointer mb-2 bg-blue-600/20 border-l-4 border-blue-500 transition-all' 
-      : 'p-3 flex items-center gap-3 rounded-xl cursor-pointer mb-2 hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-200'
-  }
+  const navigate = useNavigate()
+  const { type, id } = useParams()
 
-  const getOnlineStatusClass = (u) => {
-    return onlineUsers.includes(u._id) 
-      ? 'h-3 w-3 rounded-full bg-green-500 border-2 border-slate-900' 
-      : 'h-3 w-3 rounded-full bg-slate-600 border-2 border-slate-900'
+  const handleSelectUser = (userId) => {
+    navigate(`/chat/user/${userId}`)
   }
 
   return (      
@@ -54,7 +41,7 @@ const ChatSidebar = () => {
           </div>
         </div>
 
-        <Search onSelectUser={loadUserMessages} />
+        <Search onSelectUser={handleSelectUser} />
       </div>
       
       {/* Scrollable List */}
@@ -67,20 +54,12 @@ const ChatSidebar = () => {
             </h3>
             <div className="space-y-1">
               {groups.map((g) => (
-                <div
+                <GroupItem 
                   key={g._id}
-                  onClick={() => loadGroupMessages(g)}
-                  className={getGroupClass(g)}
-                >
-                  {g.profilePic ? (
-                    <img src={g.profilePic} alt={g.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-800" />
-                  ) : (
-                    <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 font-bold ring-2 ring-slate-800">
-                      {g.name[0]}
-                    </div>
-                  )}
-                  <span className="font-medium truncate">{g.name}</span>
-                </div>
+                  group={g}
+                  isActive={type === 'group' && id === g._id}
+                  onClick={() => navigate(`/chat/group/${g._id}`)}
+                />
               ))}
             </div>
           </div>
@@ -91,23 +70,13 @@ const ChatSidebar = () => {
           <h3 className="font-semibold text-slate-500 text-xs uppercase tracking-wider mb-4 px-2">Direct Messages</h3>
           <div className="space-y-1">
             {users.map((u) => (
-              <div
+              <UserItem 
                 key={u._id}
-                onClick={() => loadUserMessages(u._id)}
-                className={getUserClass(u)}
-              >
-                <div className="relative">
-                  {u.profilePic ? (
-                    <img src={u.profilePic} alt={u.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-slate-800" />
-                  ) : (
-                    <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-slate-300 font-medium ring-2 ring-slate-800">
-                      {u.name?.[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <span className={`absolute bottom-0 right-0 ${getOnlineStatusClass(u)}`} />
-                </div>
-                <span className="font-medium truncate">{u.name}</span>
-              </div>
+                user={u}
+                isActive={type === 'user' && id === u._id}
+                isOnline={onlineUsers.includes(u._id)}
+                onClick={() => navigate(`/chat/user/${u._id}`)}
+              />
             ))}
           </div>
         </div>

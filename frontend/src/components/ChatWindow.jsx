@@ -1,35 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import imageCompression from 'browser-image-compression'
 import GroupInfoModal from './GroupInfoModal'
-import { Send, Image as ImageIcon, MoreVertical, ArrowLeft, Check, CheckCheck, Edit2, Trash2, X } from 'lucide-react'
+import MessageItem from './MessageItem'
+import { Send, Image as ImageIcon, MoreVertical, ArrowLeft } from 'lucide-react'
 import { useChat } from '../context/ChatContext'
 
+const BACKEND = "http://localhost:4000"
+
 const ChatWindow = () => {
+  const { type, id } = useParams()
+  const navigate = useNavigate()
   const { 
-    selectedUser, 
-    selectedGroup, 
-    messages, 
-    loggedInUserId, 
     users, 
-    text, 
-    setText, 
-    handleImageUpload, 
-    sendMessage, 
+    groups, 
+    loggedInUserId, 
     handleDeleteGroup, 
     handleUpdateGroup,
-    typingUsers,
-    handleTyping,
-    handleStopTyping,
-    markMessagesAsRead,
-    handleEditMessage,
-    handleDeleteMessage
+    socket
   } = useChat()
   
+  // Local State
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState("")
+  const [imageFile, setImageFile] = useState(null)
+  const [typingUsers, setTypingUsers] = useState({})
   const [showGroupInfo, setShowGroupInfo] = useState(false)
   const [editingMessageId, setEditingMessageId] = useState(null)
   const [editText, setEditText] = useState("")
+  
   const typingTimeoutRef = useRef(null)
   const messagesEndRef = useRef(null)
 
+  // Derived State
+  const selectedUser = type === 'user' ? users.find(u => u._id === id) : null
+  const selectedGroup = type === 'group' ? groups.find(g => g._id === id) : null
+
+  // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -38,29 +46,207 @@ const ChatWindow = () => {
     scrollToBottom()
   }, [messages])
 
-  // Mark messages as read when chat opens or new messages arrive
+  // Fetch Messages
   useEffect(() => {
-      if (selectedUser && messages.length > 0) {
-          const unreadMessages = messages.some(m => m.senderId === selectedUser && m.status !== 'read')
+    const fetchMessages = async () => {
+      if (!id) return
+      setMessages([]) // Clear previous messages
+      try {
+        let res
+        if (type === 'user') {
+          res = await axios.get(`${BACKEND}/messages/${id}`, { withCredentials: true })
+        } else if (type === 'group') {
+          res = await axios.get(`${BACKEND}/groups/${id}`, { withCredentials: true })
+        }
+        if (res) setMessages(res.data)
+      } catch (error) {
+        console.log("Error fetching messages:", error)
+      }
+    }
+    fetchMessages()
+  }, [type, id])
+
+  // Socket Listeners
+  useEffect(() => {
+    if (!socket) return
+
+    const handleNewMessage = (msg) => {
+      if (type !== 'user') return
+      
+      const isMyChat =
+        (msg.senderId === loggedInUserId && msg.receiverId === id) ||
+        (msg.senderId === id && msg.receiverId === loggedInUserId)
+
+      if (isMyChat) {
+        setMessages((prev) => {
+          if (prev.some(m => m._id === msg._id)) return prev
+          return [...prev, msg]
+        })
+        // Mark as read if window is open
+        if (msg.senderId === id) {
+            socket.emit("markMessagesAsRead", { chatId: null, userToChatId: id })
+        }
+      }
+    }
+
+    const handleNewGroupMessage = (msg) => {
+      if (type !== 'group') return
+      
+      if (msg.senderId == loggedInUserId || msg.senderId?.toString() === loggedInUserId) return
+
+      if (msg.groupId === id) {
+        setMessages((prev) => {
+          if (prev.some(m => m._id === msg._id)) return prev
+          return [...prev, msg]
+        })
+      }
+    }
+
+    const handleTyping = ({ chatId, senderId }) => {
+        if (type === 'user' && senderId === id) {
+            setTypingUsers(prev => ({ ...prev, [senderId]: true }))
+        } else if (type === 'group' && chatId === id && senderId !== loggedInUserId) {
+            setTypingUsers(prev => ({ ...prev, [senderId]: true }))
+        }
+    }
+
+    const handleStopTyping = ({ chatId, senderId }) => {
+        if ((type === 'user' && senderId === id) || (type === 'group' && chatId === id)) {
+            setTypingUsers(prev => {
+                const newState = { ...prev }
+                delete newState[senderId]
+                return newState
+            })
+        }
+    }
+
+    const handleMessagesRead = ({ chatId, readerId }) => {
+        setMessages(prev => prev.map(msg => {
+            if (msg.senderId === loggedInUserId && (msg.receiverId === readerId || msg.groupId === chatId)) {
+                return { ...msg, status: 'read' }
+            }
+            return msg
+        }))
+    }
+
+    const handleMessageUpdated = (updatedMessage) => {
+        setMessages(prev => prev.map(msg => msg._id === updatedMessage._id ? updatedMessage : msg))
+    }
+
+    const handleMessageDeleted = (messageId) => {
+        setMessages(prev => prev.filter(msg => msg._id !== messageId))
+    }
+
+    socket.on("newmessage", handleNewMessage)
+    socket.on("newGroupMessage", handleNewGroupMessage)
+    socket.on("typing", handleTyping)
+    socket.on("stopTyping", handleStopTyping)
+    socket.on("messagesRead", handleMessagesRead)
+    socket.on("messageUpdated", handleMessageUpdated)
+    socket.on("messageDeleted", handleMessageDeleted)
+
+    return () => {
+      socket.off("newmessage", handleNewMessage)
+      socket.off("newGroupMessage", handleNewGroupMessage)
+      socket.off("typing", handleTyping)
+      socket.off("stopTyping", handleStopTyping)
+      socket.off("messagesRead", handleMessagesRead)
+      socket.off("messageUpdated", handleMessageUpdated)
+      socket.off("messageDeleted", handleMessageDeleted)
+    }
+  }, [socket, type, id, loggedInUserId])
+
+  // Mark messages as read on mount/update
+  useEffect(() => {
+      if (type === 'user' && id && messages.length > 0) {
+          const unreadMessages = messages.some(m => m.senderId === id && m.status !== 'read')
           if (unreadMessages) {
-              markMessagesAsRead(null, selectedUser)
+              socket.emit("markMessagesAsRead", { chatId: null, userToChatId: id })
+              // Optimistic update
+              setMessages(prev => prev.map(msg => {
+                  if (msg.senderId === id && msg.status !== 'read') {
+                      return { ...msg, status: 'read' }
+                  }
+                  return msg
+              }))
           }
       }
-  }, [selectedUser, messages, markMessagesAsRead])
+  }, [type, id, messages, socket])
+
+
+  // Actions
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const compressed=await imageCompression(file,{
+      maxSizeMB:0.5,
+      maxWidthOrHeight:880,
+    })
+
+    const reader = new FileReader()
+    reader.readAsDataURL(compressed)
+    reader.onloadend = () => {
+      setImageFile(reader.result) 
+    } 
+  }
+
+  const sendMessage = async () => {
+    if (!text.trim() && !imageFile) return
+
+    try {
+      let res
+      if (type === 'user') {
+        res = await axios.post(
+          `${BACKEND}/messages/${id}`,
+          { text, image: imageFile },
+          { withCredentials: true }
+        )
+      } else if (type === 'group') {
+        res = await axios.post(
+          `${BACKEND}/groups/send`,
+          { 
+            groupId: id,
+            senderId: loggedInUserId,
+            text, 
+            image: imageFile 
+          },
+          { withCredentials: true }
+        )
+      }
+
+      if (res && res.data) {
+        setText("")
+        setImageFile(null)
+        setMessages((prev) => {
+          if (prev.some(m => m._id === res.data._id)) return prev
+          return [...prev, res.data]
+        })
+      }
+    } catch (error) {
+      console.log("Error sending message:", error)
+    }
+  }
+
+  const handleTypingAction = (isTyping) => {
+      if (type === 'user') {
+          socket.emit(isTyping ? "typing" : "stopTyping", { chatId: null, receiverId: id })
+      } else if (type === 'group') {
+          socket.emit(isTyping ? "typing" : "stopTyping", { chatId: id, receiverId: null })
+      }
+  }
 
   const handleInputChange = (e) => {
       setText(e.target.value)
       
       if (!typingTimeoutRef.current) {
-          if (selectedUser) handleTyping(null, selectedUser)
-          else if (selectedGroup) handleTyping(selectedGroup._id, null)
+          handleTypingAction(true)
       }
 
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
 
       typingTimeoutRef.current = setTimeout(() => {
-          if (selectedUser) handleStopTyping(null, selectedUser)
-          else if (selectedGroup) handleStopTyping(selectedGroup._id, null)
+          handleTypingAction(false)
           typingTimeoutRef.current = null
       }, 2000)
   }
@@ -77,10 +263,15 @@ const ChatWindow = () => {
 
   const submitEdit = (msgId) => {
       if (editText.trim()) {
-          handleEditMessage(msgId, editText)
+          socket.emit("editMessage", { messageId: msgId, newText: editText })
           setEditingMessageId(null)
           setEditText("")
       }
+  }
+
+  const handleDeleteMessage = (messageId) => {
+      if(!window.confirm("Delete this message?")) return
+      socket.emit("deleteMessage", { messageId })
   }
 
   const getMessageContainerClass = (msg) => {
@@ -94,6 +285,17 @@ const ChatWindow = () => {
       ? 'p-3 rounded-2xl max-w-xs bg-blue-600 text-white shadow-md rounded-br-none' 
       : 'p-3 rounded-2xl max-w-xs bg-slate-800 text-slate-200 shadow-md rounded-bl-none border border-slate-700'
   }
+
+  // If ID is present but user/group not found yet (loading), show loading or nothing
+  // But usually users/groups are loaded.
+  
+  if (!selectedUser && !selectedGroup) {
+      return <div className="flex-1 bg-slate-950 flex items-center justify-center text-slate-500">Loading...</div>
+  }
+
+  const chatName = selectedUser ? selectedUser.name : selectedGroup?.name
+  const chatImage = selectedUser ? selectedUser.profilePic : selectedGroup?.profilePic
+  const chatPlaceholder = selectedUser ? selectedUser.name?.[0] : selectedGroup?.name?.[0]
 
   return (
     <div className="flex flex-col flex-1 bg-slate-950 relative">
@@ -110,46 +312,25 @@ const ChatWindow = () => {
 
       {/* HEADER */}
       <div className="p-4 bg-slate-900 shadow-sm flex items-center justify-between border-b border-slate-800 z-10">
-        {selectedGroup ? (
-          <div 
+        <div 
             className="flex items-center gap-3 cursor-pointer hover:bg-slate-800 p-2 rounded-lg transition-colors"
-            onClick={() => setShowGroupInfo(true)}
-          >
-            {selectedGroup.profilePic ? (
-              <img src={selectedGroup.profilePic} alt={selectedGroup.name} className="h-10 w-10 rounded-full object-cover shadow-sm ring-2 ring-slate-800" />
+            onClick={() => selectedGroup && setShowGroupInfo(true)}
+        >
+            {/* Back button for mobile could go here */}
+            {chatImage ? (
+              <img src={chatImage} alt={chatName} className="h-10 w-10 rounded-full object-cover shadow-sm ring-2 ring-slate-800" />
             ) : (
               <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold text-lg ring-2 ring-slate-800">
-                {selectedGroup.name[0]}
+                {chatPlaceholder || '?'}
               </div>
             )}
             <div>
-              <span className="font-bold text-slate-100 block leading-tight">{selectedGroup.name}</span>
-              <span className="text-xs text-slate-400">{selectedGroup.members.length} members</span>
+              <span className="font-bold text-slate-100 block leading-tight">{chatName}</span>
+              {selectedGroup && <span className="text-xs text-slate-400">{selectedGroup.members.length} members</span>}
+              {selectedUser && typingUsers[id] && <span className="text-xs text-blue-400 animate-pulse">Typing...</span>}
+              {selectedGroup && Object.keys(typingUsers).length > 0 && <span className="text-xs text-blue-400 animate-pulse">Someone is typing...</span>}
             </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            {users.find((u) => u._id === selectedUser)?.profilePic ? (
-              <img 
-                src={users.find((u) => u._id === selectedUser)?.profilePic} 
-                alt="profile" 
-                className="h-10 w-10 rounded-full object-cover shadow-sm ring-2 ring-slate-800" 
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-bold ring-2 ring-slate-800">
-                {users.find((u) => u._id === selectedUser)?.name?.[0] || '?'}
-              </div>
-            )}
-            <div className="flex flex-col">
-               <span className="font-bold text-lg text-slate-100 leading-tight">
-                {users.find((u) => u._id === selectedUser)?.name || 'Chat'}
-              </span>
-              {typingUsers[selectedUser] && (
-                  <span className="text-xs text-blue-400 animate-pulse">Typing...</span>
-              )}
-            </div>
-          </div>
-        )}
+        </div>
 
         <div className="flex items-center gap-4 text-slate-400">
            <MoreVertical className="w-5 h-5 cursor-pointer hover:text-blue-500 transition-colors" />
@@ -159,70 +340,20 @@ const ChatWindow = () => {
       {/* MESSAGES */}
       <div className="flex-1 p-6 overflow-y-auto space-y-2 custom-scrollbar bg-slate-950">
         {messages.map((m, i) => (
-          <div
-            key={i}
-            className={getMessageContainerClass(m)}
-          >
-            <div className={`${getMessageBubbleClass(m)} relative group`}>
-              {/* Show sender name in group chat if not me */}
-              {selectedGroup && m.senderId !== loggedInUserId && (
-                <p className="text-xs text-blue-400 font-bold mb-1">
-                  {users.find((u) => u._id === m.senderId)?.name}
-                </p>
-              )}
-              {m.image && (
-                <img
-                  src={m.image}
-                  alt="sent-img"
-                  className="max-w-[200px] rounded-lg mb-2 border border-white/10"
-                />
-              )}
-              
-              {editingMessageId === m._id ? (
-                  <div className="flex flex-col gap-2">
-                      <input 
-                          value={editText} 
-                          onChange={(e) => setEditText(e.target.value)}
-                          className="bg-slate-700 text-white p-1 rounded text-sm w-full"
-                      />
-                      <div className="flex gap-2 justify-end">
-                          <button onClick={cancelEditing} className="text-xs text-red-400"><X size={14}/></button>
-                          <button onClick={() => submitEdit(m._id)} className="text-xs text-green-400"><Check size={14}/></button>
-                      </div>
-                  </div>
-              ) : (
-                  <>
-                    {m.text && <p className="leading-relaxed">{m.text}</p>}
-                    {m.isEdited && <span className="text-[9px] text-slate-400 block text-right italic">edited</span>}
-                  </>
-              )}
-
-              <div className="flex items-center justify-end gap-1 mt-1">
-                <p className={`text-[10px] ${m.senderId === loggedInUserId ? 'text-blue-100' : 'text-slate-400'}`}>
-                    {new Date(m.createdAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </p>
-                {m.senderId === loggedInUserId && (
-                    <span className="text-blue-100">
-                        {m.status === 'read' ? <CheckCheck size={14} className="text-blue-200" /> : 
-                         m.status === 'delivered' ? <CheckCheck size={14} className="text-slate-400" /> :
-                         <Check size={14} className="text-slate-400" />}
-                    </span>
-                )}
-              </div>
-
-              {/* Message Actions (Edit/Delete) - Only for own messages */}
-              {m.senderId === loggedInUserId && !editingMessageId && (
-                  <div className="absolute top-0 right-0 -mt-2 -mr-2 hidden group-hover:flex bg-slate-800 rounded-lg shadow-lg p-1 gap-1 z-10">
-                      <button onClick={() => startEditing(m)} className="p-1 hover:bg-slate-700 rounded text-slate-300 hover:text-blue-400">
-                          <Edit2 size={12} />
-                      </button>
-                      <button onClick={() => handleDeleteMessage(m._id)} className="p-1 hover:bg-slate-700 rounded text-slate-300 hover:text-red-400">
-                          <Trash2 size={12} />
-                      </button>
-                  </div>
-              )}
-            </div>
-          </div>
+          <MessageItem 
+            key={i} 
+            msg={m}
+            loggedInUserId={loggedInUserId}
+            selectedGroup={selectedGroup}
+            users={users}
+            editingMessageId={editingMessageId}
+            editText={editText}
+            setEditText={setEditText}
+            cancelEditing={cancelEditing}
+            submitEdit={submitEdit}
+            startEditing={startEditing}
+            handleDeleteMessage={handleDeleteMessage}
+          />
         ))}
         <div ref={messagesEndRef} />
       </div>
@@ -252,7 +383,7 @@ const ChatWindow = () => {
         <button
           onClick={sendMessage}
           className="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-500 shadow-lg shadow-blue-900/30 transition-transform active:scale-95 flex items-center justify-center"
-          disabled={!text.trim() && !handleImageUpload} 
+          disabled={!text.trim() && !imageFile} 
         >
           <Send className="w-5 h-5" />
         </button>
