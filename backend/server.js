@@ -27,7 +27,9 @@ app.use(
 // Connect DB
 connectDB()
 
-// API Routes
+app.get("/", (req, res) => {
+  res.send("Hello World!")
+})
 app.use("/user", userRoutes)
 app.use("/messages", authmiddleware, messageRoutes)
 app.use('/groups', authmiddleware, groupRoutes)
@@ -35,7 +37,6 @@ app.use('/groups', authmiddleware, groupRoutes)
 // Initialize Socket.io using SAME server
 initializeSocket(server)
 
-// Start server
 server.listen(4000, () => {
   console.log("server is running on port 4000")
 })
