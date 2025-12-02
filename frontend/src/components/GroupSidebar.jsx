@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const BACKEND = "https://chatui-m4hf.onrender.com";
+const BACKEND = "https://chatui-1-ffr2.onrender.com";
 
 export default function GroupSidebar({ userId, onSelectGroup }) {
   const [groups, setGroups] = useState([]);

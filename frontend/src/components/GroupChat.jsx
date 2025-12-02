@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
-const BACKEND = "https://chatui-m4hf.onrender.com";
+const BACKEND = "https://chatui-1-ffr2.onrender.com";
 
 export default function GroupChat({ group, socket }) {
   const userId = localStorage.getItem("userId");
