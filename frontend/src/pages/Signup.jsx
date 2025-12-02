@@ -122,8 +122,8 @@ const Signup = () => {
     }
     
   return (
-    <div className='flex justify-center items-center w-full h-screen bg-amber-300 '>
-        <div className='border border-gray-200 bg-white p-8 rounded-2xl shadow-xl w-96 cursor-pointer' >
+    <div className='flex justify-center items-center w-full h-screen bg-gradient-to-br from-blue-500 to-purple-600'>
+        <div className='border border-white/30 bg-white/30 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-96 cursor-pointer' >
             <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
             <p className='text-red-600 text-center'>{error.allfield}</p>
         <form className='flex flex-col gap-3 w-full' onSubmit={handle}>
