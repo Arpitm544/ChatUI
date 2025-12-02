@@ -19,7 +19,11 @@ const server = http.createServer(app)
 await connectDB()
 app.set("trust proxy", 1);
 app.use(cors({
-  origin: true,
+  origin:[
+    "http://localhost:5173",
+    "https://chat-ui-hm84.vercel.app",
+    "https://chatui-m4hf.onrender.com"
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
