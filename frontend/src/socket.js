@@ -1,5 +1,5 @@
 import { io } from "socket.io-client"
 
-const socket = io("https://chatui-m4hf.onrender.com")  // backend URL
+const socket = io(import.meta.env.VITE_BACKEND_URL)  // backend URL
 
 export default socket

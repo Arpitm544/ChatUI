@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 
 const ChatContext = createContext()
 
-const BACKEND = "https://chatui-m4hf.onrender.com"
+const BACKEND = import.meta.env.VITE_BACKEND_URL
 
 // SOCKET CONNECTION
 const socket = io(BACKEND, {
