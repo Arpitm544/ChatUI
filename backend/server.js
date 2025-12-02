@@ -17,7 +17,7 @@ const server = http.createServer(app)
 
  async function startServer(){
 await connectDB()
-
+app.set("trust proxy", 1);
 app.use(cors({
   origin: true,
   credentials: true,
@@ -38,8 +38,9 @@ app.use('/groups', authmiddleware, groupRoutes)
 // Initialize Socket.io using SAME server
 initializeSocket(server)
 
-server.listen(4000, () => {
-  console.log("server is running on port 4000")
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`)
 })
 }
 
