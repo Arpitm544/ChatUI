@@ -22,7 +22,6 @@ app.use(cors({
   origin:[
     "http://localhost:5173",
     "https://chat-ui-hm84.vercel.app",
-    "https://chatui-m4hf.onrender.com"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
