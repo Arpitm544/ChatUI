@@ -1,10 +1,10 @@
 const express = require('express')
 const router = express.Router()
 const Message = require('../model/message_schema')
-const User = require('../model/user_schema')
+const User = require('../model/User_schema')
 const cloudinary = require('../lib/cloudinary.js')
 const {io, getReceiverSocketId } = require('../lib/socket')
-const authmiddleware = require('../middleware/autMiddleware.js')
+const authmiddleware = require('../middleware/authMiddleware.js')
 
 
 router.get('/',authmiddleware, async   (req, res) => {
@@ -59,15 +59,22 @@ router.post('/:id', authmiddleware, async (req, res) => {
             imageUrl = uploadResponse.secure_url
         }
         
+        const receiverSocketId=getReceiverSocketId(receiverId)
+        
+        let status = 'sent'
+        if (receiverSocketId) {
+            status = 'delivered'
+        }
+
         const newMessage = new Message({
             senderId,
             receiverId,
             text,
-            image:imageUrl
+            image:imageUrl,
+            status
         })
         await newMessage.save()
         
-      const receiverSocketId=getReceiverSocketId(receiverId)
       if(receiverSocketId){
         io().to(receiverSocketId).emit('newmessage',newMessage)
       } 

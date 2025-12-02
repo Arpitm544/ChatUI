@@ -20,7 +20,7 @@ export const useChat = () => useContext(ChatContext)
 export const ChatProvider = ({ children }) => {
   const [users, setUsers] = useState([])
   const [groups, setGroups] = useState([])
-  const [me, setMe] = useState('')
+  const [me, setMe] = useState(null)
   const [onlineUsers, setOnlineUsers] = useState([])
   
   // Chat selection state
@@ -31,6 +31,7 @@ export const ChatProvider = ({ children }) => {
   const [text, setText] = useState("")
   const [imageFile, setImageFile] = useState(null)
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
+  const [typingUsers, setTypingUsers] = useState({}) // { userId: boolean }
 
   const loggedInUserId = localStorage.getItem("userId")
   const navigate = useNavigate()
@@ -62,7 +63,7 @@ export const ChatProvider = ({ children }) => {
 
   const fetchMyInfo = () => {
     axios.get(`${BACKEND}/messages/me`,{withCredentials:true})
-    .then((res)=>setMe(res.data.name))
+    .then((res)=>setMe(res.data))
     .catch(console.log)
   }
 
@@ -167,12 +168,48 @@ export const ChatProvider = ({ children }) => {
       }
     })
 
+    socket.on("typing", ({ chatId, senderId }) => {
+        setTypingUsers(prev => ({ ...prev, [senderId]: true }))
+    })
+
+    socket.on("stopTyping", ({ chatId, senderId }) => {
+        setTypingUsers(prev => {
+            const newState = { ...prev }
+            delete newState[senderId]
+            return newState
+        })
+    })
+
+    socket.on("messagesRead", ({ chatId, readerId }) => {
+        setMessages(prev => prev.map(msg => {
+            if (msg.senderId === loggedInUserId && (msg.receiverId === readerId || msg.groupId === chatId)) {
+                return { ...msg, status: 'read' }
+            }
+            return msg
+        }))
+    })
+
+    socket.on("messageUpdated", (updatedMessage) => {
+        setMessages(prev => prev.map(msg => msg._id === updatedMessage._id ? updatedMessage : msg))
+    })
+
+    socket.on("messageDeleted", (messageId) => {
+        console.log("Frontend received messageDeleted:", messageId)
+        // alert("Message deleted event received!")
+        setMessages(prev => prev.filter(msg => msg._id !== messageId))
+    })
+
     return () => {
       socket.off("newmessage", handleNewMessage)
       socket.off("newGroupMessage", handleNewGroupMessage)
       socket.off("newGroup")
       socket.off("groupDeleted")
       socket.off("groupUpdated")
+      socket.off("typing")
+      socket.off("stopTyping")
+      socket.off("messagesRead")
+      socket.off("messageUpdated")
+      socket.off("messageDeleted")
     }
   }, [loggedInUserId])
 
@@ -260,6 +297,21 @@ export const ChatProvider = ({ children }) => {
     }
   }
 
+  const handleUpdateProfile = async (data) => {
+    try {
+      const res = await axios.put(
+        `${BACKEND}/user/update-profile`,
+        data,
+        { withCredentials: true }
+      )
+      setMe(res.data)
+      return res.data
+    } catch (error) {
+      console.log("Error updating profile:", error)
+      throw error
+    }
+  }
+
   const handleLogout = async () => {
     try {
       await axios.delete(`${BACKEND}/user/logout`, { withCredentials: true })
@@ -297,6 +349,34 @@ export const ChatProvider = ({ children }) => {
       }
   }
 
+  const handleTyping = (chatId, receiverId) => {
+      socket.emit("typing", { chatId, receiverId })
+  }
+
+  const handleStopTyping = (chatId, receiverId) => {
+      socket.emit("stopTyping", { chatId, receiverId })
+  }
+
+  const markMessagesAsRead = (chatId, userToChatId) => {
+      socket.emit("markMessagesAsRead", { chatId, userToChatId })
+      // Optimistically update local messages
+      setMessages(prev => prev.map(msg => {
+          if (msg.senderId === userToChatId && msg.status !== 'read') {
+              return { ...msg, status: 'read' }
+          }
+          return msg
+      }))
+  }
+
+  const handleEditMessage = (messageId, newText) => {
+      socket.emit("editMessage", { messageId, newText })
+  }
+
+  const handleDeleteMessage = (messageId) => {
+      if(!window.confirm("Delete this message?")) return
+      socket.emit("deleteMessage", { messageId })
+  }
+
   const value = {
     users,
     groups,
@@ -319,7 +399,14 @@ export const ChatProvider = ({ children }) => {
     handleUpdateGroup,
     handleLogout,
     handleDeleteAccount,
-    handleDeleteGroup
+    handleDeleteGroup,
+    handleUpdateProfile,
+    typingUsers,
+    handleTyping,
+    handleStopTyping,
+    markMessagesAsRead,
+    handleEditMessage,
+    handleDeleteMessage
   }
 
   return (

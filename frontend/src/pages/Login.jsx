@@ -97,6 +97,9 @@ const Login = () => {
           Login
         </button>
       </form>
+      <div className='mt-2 text-right'>
+        <a href="/forgot-password" className='text-blue-600 text-sm hover:underline'>Forgot Password?</a>
+      </div>
       <Switch type="login" className='mt-3'/>
       </div>
     </div>

@@ -7,7 +7,7 @@ const connectDB = require("./db/mongoose")
 const userRoutes = require("./controllers/User.controller")
 const messageRoutes = require("./controllers/message_controllers")
 const groupRoutes = require('./controllers/group.controller')
-const authmiddleware = require("./middleware/autMiddleware")
+const authmiddleware = require("./middleware/authMiddleware")
 const { initializeSocket } = require("./lib/socket")
 
 const app = express()
