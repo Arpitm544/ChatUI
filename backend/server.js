@@ -19,9 +19,12 @@ const server = http.createServer(app)
 await connectDB()
 
 app.use(cors({
-  origin: "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true
+  origin: ["http://localhost:5173",
+    "https://chatui-m4hf.onrender.com",
+    "https://chat-ui-hm84.vercel.app"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
 app.use(express.json({limit:'10mb'}))
