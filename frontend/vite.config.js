@@ -8,9 +8,11 @@ export default defineConfig({
     tailwindcss(),
   ],
 
-  // 🚀 Add this part for Render deployment
   preview: {
-    host: true,       // required for Render
-    port: 4173        // Render will detect this port
+    host: true,       // required
+    port: 4173,       // render detects this
+    allowedHosts: [
+      "chatui-2.onrender.com"   // your frontend domain
+    ]
   }
 })
