@@ -18,11 +18,7 @@ connectDB()
  
 app.set("trust proxy", 1);
 app.use(cors({
-  origin:[
-    "https://chat-ui-hm84.vercel.app",
-    "https://chat-ui-hm84-lmbz847l2-arpitm544s-projects.vercel.app",
-    "https://chatui-066b08.netlify.app"
-  ],
+  origin: "https://chatui-066b08.netlify.app",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
