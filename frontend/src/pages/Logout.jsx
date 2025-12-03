@@ -13,7 +13,7 @@ const Logout = () => {
             localStorage.removeItem('token')
             localStorage.removeItem('userId')
             navigate('/login')
-            console.log("Loout successful")
+
         })
     }
     catch(error){

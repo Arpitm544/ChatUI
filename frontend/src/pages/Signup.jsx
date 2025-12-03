@@ -70,7 +70,7 @@ const Signup = () => {
                 navigate('/chat', {replace:true })
             },1500)
 
-            console.log(res.data)
+
 
         } catch (error) {
             console.log(error)

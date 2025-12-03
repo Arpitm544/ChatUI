@@ -21,6 +21,7 @@ app.use(cors({
   origin:[
     "https://chat-ui-hm84.vercel.app",
     "https://chat-ui-hm84-lmbz847l2-arpitm544s-projects.vercel.app",
+    "http://localhost:5173"
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
