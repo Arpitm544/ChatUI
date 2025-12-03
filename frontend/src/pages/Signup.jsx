@@ -17,6 +17,8 @@ const Signup = () => {
             allfield:""
         })
 
+        const [apiError, setApiError] = useState('')
+
         const navigate=useNavigate()
     
         useEffect(() => {
@@ -33,6 +35,7 @@ const Signup = () => {
 
     const handle= async(e)=>{
           e.preventDefault()
+          setApiError('')
 
           // check all fields on direct submit
           if (!name||!username||!email||!password) {
@@ -74,11 +77,13 @@ const Signup = () => {
 
         } catch (error) {
             console.log(error)
+            setApiError(error.response?.data?.message || "Signup failed. Please try again.")
         }
     }
     const namehandle=(e)=>{
        const val=e.target.value
         setName(val)
+        setApiError('')
 
         //this updates only the name error without removing other errors
         setError((prev)=>({
@@ -90,6 +95,7 @@ const Signup = () => {
     const usernamehandle=(e)=>{
         const val=e.target.value
         setUserName(val.toLowerCase())
+        setApiError('')
 
         setError((prev)=>({
             ...prev,
@@ -101,6 +107,7 @@ const Signup = () => {
         const regex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/
         const val=e.target.value
         setEmail(val.toLowerCase())
+        setApiError('')
         
         setError((prev)=>({
             ...prev,
@@ -111,6 +118,7 @@ const Signup = () => {
     const passwordhandle=(e)=>{
         const val=e.target.value
         setPassword(val)
+        setApiError('')
 
         setError((prev)=>({
             ...prev,
@@ -122,6 +130,7 @@ const Signup = () => {
     <div className='flex justify-center items-center w-full h-screen bg-gradient-to-br from-blue-500 to-purple-600'>
         <div className='border border-white/30 bg-white/30 backdrop-blur-lg p-8 rounded-2xl shadow-xl w-96 cursor-pointer' >
             <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
+            {apiError && <p className='text-red-600 text-center mb-2 bg-red-100 p-2 rounded'>{apiError}</p>}
             <p className='text-red-600 text-center'>{error.allfield}</p>
         <form className='flex flex-col gap-3 w-full' onSubmit={handle}>
         <input type='text' placeholder='Enter your Name' onChange={namehandle} className='p-3 border border-gray-300 rounded  transition'/>

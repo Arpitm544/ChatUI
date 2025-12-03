@@ -12,6 +12,8 @@ const Login = () => {
         password
     })
 
+    const [apiError, setApiError] = useState('')
+
     const navigate=useNavigate()
 
     useEffect(() => {
@@ -29,6 +31,7 @@ const Login = () => {
     
     const handlelogin=async(e)=>{
        e.preventDefault()
+       setApiError('')
     
        try{
        const res=await axios.post("/user/login",{
@@ -46,12 +49,14 @@ const Login = () => {
     }
     catch(error){
         console.log(error)
+        setApiError(error.response?.data?.message || "Login failed. Please try again.")
     }
 }
 
     const emailhandle=(e)=>{
         const val=e.target.value
         setEmail(val)
+        setApiError('')
 
         setError((prev)=>({
             ...prev,
@@ -62,6 +67,7 @@ const Login = () => {
      const passwordhandle=(e)=>{
         const val=e.target.value
         setPassword(val)
+        setApiError('')
 
         setError((prev)=>({
             ...prev,
@@ -73,6 +79,7 @@ const Login = () => {
     <div className='flex justify-center items-center w-full h-screen bg-gradient-to-br from-blue-500 to-purple-600'>
          <div className='border border-white/30 bg-white/30 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-96'>
             <h2 className='text-2xl font-bold text-center mb-4 text-gray-800'>Welcome to ChatUI</h2>
+            {apiError && <p className='text-red-600 text-center mb-2 bg-red-100 p-2 rounded'>{apiError}</p>}
       <form onSubmit={handlelogin} className='flex flex-col gap-3 w-full'>
         <input 
           type='text' 
