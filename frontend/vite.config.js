@@ -7,4 +7,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+
+  // 🚀 Add this part for Render deployment
+  preview: {
+    host: true,       // required for Render
+    port: 4173        // Render will detect this port
+  }
 })
