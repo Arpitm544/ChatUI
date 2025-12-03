@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-
-const BACKEND = "https://chatui-1-ffr2.onrender.com";
+import axios from "../lib/axios";
 
 export default function GroupSidebar({ userId, onSelectGroup }) {
   const [groups, setGroups] = useState([]);
@@ -12,9 +10,8 @@ export default function GroupSidebar({ userId, onSelectGroup }) {
     const fetchGroups = async () => {
       try {
         const res = await axios.post(
-          `${BACKEND}/group/user`,
-          { userId },
-          { withCredentials: true }
+          "/group/user",
+          { userId }
         );
         setGroups(res.data.groups);
       } catch (err) {

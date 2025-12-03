@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../lib/axios'
 import imageCompression from 'browser-image-compression'
 import GroupInfoModal from './GroupInfoModal'
 import MessageItem from './MessageItem'
 import { Send, Image as ImageIcon, MoreVertical, ArrowLeft } from 'lucide-react'
 import { useChat } from '../context/ChatContext'
-
-const BACKEND = "https://chatui-1-ffr2.onrender.com"
 
 const ChatWindow = () => {
   const { type, id } = useParams()
@@ -54,9 +52,9 @@ const ChatWindow = () => {
       try {
         let res
         if (type === 'user') {
-          res = await axios.get(`${BACKEND}/messages/${id}`, { withCredentials: true })
+          res = await axios.get(`/messages/${id}`)
         } else if (type === 'group') {
-          res = await axios.get(`${BACKEND}/groups/${id}`, { withCredentials: true })
+          res = await axios.get(`/groups/${id}`)
         }
         if (res) setMessages(res.data)
       } catch (error) {
@@ -198,20 +196,18 @@ const ChatWindow = () => {
       let res
       if (type === 'user') {
         res = await axios.post(
-          `${BACKEND}/messages/${id}`,
-          { text, image: imageFile },
-          { withCredentials: true }
+          `/messages/${id}`,
+          { text, image: imageFile }
         )
       } else if (type === 'group') {
         res = await axios.post(
-          `${BACKEND}/groups/send`,
+          "/groups/send",
           { 
             groupId: id,
             senderId: loggedInUserId,
             text, 
             image: imageFile 
-          },
-          { withCredentials: true }
+          }
         )
       }
 

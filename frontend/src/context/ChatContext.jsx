@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from "react"
 import io from "socket.io-client"
-import axios from "axios"
+import axios from "../lib/axios"
 import imageCompression from 'browser-image-compression'
 import { useNavigate } from "react-router-dom"
 
 const ChatContext = createContext()
 
-const BACKEND = "https://chatui-1-ffr2.onrender.com"
+const BACKEND = import.meta.env.VITE_BACKEND_URL || "https://chatui-1-ffr2.onrender.com"
 
 // SOCKET CONNECTION
 const socket = io(BACKEND, {
@@ -41,20 +41,20 @@ export const ChatProvider = ({ children }) => {
 
   const fetchUsers = () => {
     axios
-      .get(`${BACKEND}/messages`, { withCredentials: true })
+      .get("/messages")
       .then((res) => setUsers(res.data))
       .catch(console.log)
   }
 
   const fetchGroups = () => {
     axios
-      .get(`${BACKEND}/groups/mygroups`, { withCredentials: true })
+      .get("/groups/mygroups")
       .then((res) => setGroups(res.data))
       .catch(console.log)
   }
 
   const fetchMyInfo = () => {
-    axios.get(`${BACKEND}/messages/me`,{withCredentials:true})
+    axios.get("/messages/me")
     .then((res)=>setMe(res.data))
     .catch(console.log)
   }
@@ -100,9 +100,8 @@ export const ChatProvider = ({ children }) => {
   const handleCreateGroup = async (name, members, image) => {
     try {
       const res = await axios.post(
-        `${BACKEND}/groups/create`,
-        { name, members, image },
-        { withCredentials: true }
+        "/groups/create",
+        { name, members, image }
       )
       setGroups([...groups, res.data.group])
       setShowCreateGroupModal(false)
@@ -114,9 +113,8 @@ export const ChatProvider = ({ children }) => {
   const handleUpdateGroup = async (groupId, name, image, members) => {
     try {
       const res = await axios.put(
-        `${BACKEND}/groups/${groupId}`,
-        { name, image, members },
-        { withCredentials: true }
+        `/groups/${groupId}`,
+        { name, image, members }
       )
       // Socket will handle the update for everyone including sender
     } catch (error) {
@@ -128,9 +126,8 @@ export const ChatProvider = ({ children }) => {
   const handleUpdateProfile = async (data) => {
     try {
       const res = await axios.put(
-        `${BACKEND}/user/update-profile`,
-        data,
-        { withCredentials: true }
+        "/user/update-profile",
+        data
       )
       setMe(res.data)
       return res.data
@@ -142,7 +139,7 @@ export const ChatProvider = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.delete(`${BACKEND}/user/logout`, { withCredentials: true })
+      await axios.delete("/user/logout")
       localStorage.removeItem("userId")
       localStorage.removeItem("token")
       socket.disconnect()
@@ -155,7 +152,7 @@ export const ChatProvider = ({ children }) => {
   const handleDeleteAccount = async () => {
       try {
         if(!window.confirm("Are you sure you want to delete your account?")) return
-        await axios.delete(`${BACKEND}/user/delete`, { withCredentials: true })
+        await axios.delete("/user/delete")
         localStorage.removeItem("userId")
         localStorage.removeItem("token")
         socket.disconnect()
@@ -168,7 +165,7 @@ export const ChatProvider = ({ children }) => {
   const handleDeleteGroup = async (groupId) => {
       try {
         if(!window.confirm("Are you sure you want to delete this group?")) return
-        await axios.delete(`${BACKEND}/groups/${groupId}`, { withCredentials: true })
+        await axios.delete(`/groups/${groupId}`)
         setGroups(groups.filter((g) => g._id !== groupId))
       } catch (error) {
         console.log("Delete group error:", error)

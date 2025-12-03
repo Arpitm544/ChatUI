@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../lib/axios'
 import React, {useEffect, useState} from 'react'
 import { useNavigate } from 'react-router-dom'
 import Switch from '../components/Switch'
@@ -22,9 +22,7 @@ const Signup = () => {
         useEffect(() => {
             const checkAuth = async () => {
                 try {
-                    await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/check-auth`, {
-                        withCredentials: true
-                    })
+                    await axios.get("/user/check-auth")
                     navigate("/chat", { replace: true });
                 } catch (error) {
                     // Not authenticated, stay on signup page
@@ -55,12 +53,12 @@ const Signup = () => {
           })) 
 
             try{
-            const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/signup`,{
+            const res=await axios.post("/user/signup",{
                 name,
                 username,
                 email,
                 password
-            },{withCredentials:true})
+            })
               
              if (res.data.success) {
       localStorage.setItem("userId", res.data.user.id)

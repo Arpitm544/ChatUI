@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from '../lib/axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 const ForgotPassword = () => {
@@ -16,7 +16,7 @@ const ForgotPassword = () => {
         setError('');
 
         try {
-            const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/forgot-password`, {
+            const res = await axios.post("/user/forgot-password", {
                 email,
                 securityCode,
                 newPassword

@@ -1,7 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
-
-const BACKEND = "https://chatui-1-ffr2.onrender.com";
+import axios from "../lib/axios";
 
 export default function GroupChat({ group, socket }) {
   const userId = localStorage.getItem("userId");
@@ -14,9 +12,8 @@ export default function GroupChat({ group, socket }) {
   useEffect(() => {
     const loadMsgs = async () => {
       const res = await axios.post(
-        `${BACKEND}/group/messages`,
-        { groupId: group._id },
-        { withCredentials: true }
+        "/group/messages",
+        { groupId: group._id }
       );
       setMessages(res.data);
     };
@@ -49,14 +46,13 @@ export default function GroupChat({ group, socket }) {
 
     // Save to DB
     await axios.post(
-      `${BACKEND}/group/send`,
+      "/group/send",
       {
         groupId: group._id,
         senderId: userId,
         text,
         image: "",
-      },
-      { withCredentials: true }
+      }
     );
 
     // Realtime emit

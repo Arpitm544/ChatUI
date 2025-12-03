@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios from "../lib/axios"
 import React, { useState } from "react"
 
 const Search = ({ onSelectUser }) => {
@@ -16,8 +16,7 @@ const Search = ({ onSelectUser }) => {
 
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/user/search?name=${val}`,
-        { withCredentials: true }
+        `/user/search?name=${val}`
       )
 
       setFilteredUsers(res.data.users)

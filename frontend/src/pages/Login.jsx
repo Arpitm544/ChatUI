@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../lib/axios'
 import React, { useEffect } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,9 +17,7 @@ const Login = () => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                await axios.get(`${import.meta.env.VITE_BACKEND_URL}/user/check-auth`, {
-                    withCredentials: true
-                })
+                await axios.get("/user/check-auth")
                 navigate("/chat", { replace: true });
             } catch (error) {
                 console.log(error)
@@ -33,10 +31,10 @@ const Login = () => {
        e.preventDefault()
     
        try{
-       const res=await axios.post(`${import.meta.env.VITE_BACKEND_URL}/user/login`,{
+       const res=await axios.post("/user/login",{
         email,
         password,
-       },{withCredentials:true})
+       })
           
         if (res.data.success) {
 

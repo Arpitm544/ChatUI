@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from '../lib/axios'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -8,9 +8,7 @@ const Logout = () => {
     {
         e.preventDefault()
         try{
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/logout`,{
-            withCredentials:true
-        })
+        await axios.delete("/user/logout")
         .then(() => {
             localStorage.removeItem('token')
             localStorage.removeItem('userId')

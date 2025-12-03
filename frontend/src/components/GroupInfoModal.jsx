@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+
 import imageCompression from 'browser-image-compression'
 import { X, Camera, Edit2, Trash2, User, Check, ArrowLeft } from 'lucide-react'
 
